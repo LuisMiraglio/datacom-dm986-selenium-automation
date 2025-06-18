@@ -1,83 +1,124 @@
-# Script DATACOM DM986-416AX30
+# DM986-416AX30 - Configurador Automático de Modem Datacom
 
-## 🖥️ Ejecutable incluido
+## 📡 Descripción
 
-Este proyecto contiene un ejecutable `.exe` llamado **DATACOM DM986-416AX30**, ubicado en la carpeta `dist/`.
+El Configurador Automático de Modem Datacom DM986 es una herramienta diseñada para simplificar y automatizar el proceso de configuración de modems Datacom DM986-416AX30. Esta aplicación utiliza Selenium para interactuar con la interfaz web del modem, permitiendo configurar en un solo paso diferentes aspectos críticos como la configuración WAN, redes WiFi (2.4GHz y 5GHz) y parámetros de seguridad.
 
-> ⚠️ **Ejecutá este archivo para configurar tu módem DATACOM DM986-416-AX30 de forma automática.**
+## ✨ Características Principales
+
+- **Configuración WAN automática**:
+  - Activación de VLAN con ID 500
+  - Configuración de modo de canal IPoE
+  - Mapeo de puertos automático
+
+- **Configuración WiFi completa**:
+  - Configuración simultánea de bandas 2.4GHz y 5GHz
+  - Optimización de ancho de canal (40MHz para 2.4GHz y 160MHz para 5GHz)
+  - Configuración de potencia de transmisión al 100%
+  - Selección automática de canales
+
+- **Configuración de Seguridad**:
+  - Establecimiento de contraseñas WPA para redes WiFi
+  - Cambio de contraseña de administrador
+  - Activación de acceso remoto por HTTPS
+
+- **Funciones adicionales**:
+  - Interfaz gráfica amigable
+  - Sistema de registros (logs) completo
+  - Soporte para múltiples navegadores (Chrome, Edge, Firefox)
+  - Detección automática de navegador disponible
+
+## 🔧 Requisitos Previos
+
+- Windows 7/8/10/11
+- Python 3.6 o superior (para ejecutar desde código fuente)
+- Conexión directa al modem Datacom DM986-416AX30
+- Al menos uno de los siguientes navegadores:
+  - Google Chrome (recomendado)
+  - Microsoft Edge
+  - Mozilla Firefox
+
+## 📥 Instalación
+
+### Opción 1: Ejecutable compilado (recomendado para usuarios finales)
+
+1. Descarga la última versión del ejecutable desde la [sección de Releases](https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30/releases)
+2. Ejecuta el archivo `DM986-416AX30.exe`
+
+### Opción 2: Desde código fuente (para desarrolladores)
+
+1. Clona este repositorio:
+   ```
+   git clone https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30.git
+   ```
+
+2. Instala las dependencias:
+   ```
+   pip install selenium webdriver-manager
+   ```
+
+3. Ejecuta el script:
+   ```
+   python DM986-416AX30.py
+   ```
+
+## 🚀 Uso
+
+1. Inicia la aplicación ejecutando `DM986-416AX30.exe` o desde código fuente.
+2. Selecciona el navegador que deseas utilizar (Google Chrome es recomendado).
+3. Completa todos los campos del formulario:
+   - Nombre de usuario del modem (por defecto: "admin")
+   - Contraseña actual del modem
+   - Nombre de red WiFi (SSID) deseado
+   - Contraseña WPA para la red WiFi
+   - Nueva contraseña de administrador
+4. Haz clic en "Configurar Modem" para iniciar el proceso automático.
+5. Espera a que se complete la configuración (la barra de progreso indicará el avance).
+6. Una ventana de resumen mostrará todas las operaciones realizadas.
+
+## 📂 Estructura del Proyecto
+
+```
+Script-DATACOM-DM986-416-AX30/
+├── DM986-416AX30.py      # Script principal
+├── DM986-416AX30.spec    # Archivo de configuración de PyInstaller
+├── datacom_config.ico    # Icono de la aplicación
+├── build/                # Archivos de compilación
+├── dist/                 # Ejecutable compilado
+└── logs/                 # Directorio de logs generados por la aplicación
+```
+
+## 🔍 Visor de Registros
+
+La aplicación incluye un visor de registros (logs) que puedes acceder desde el menú "Herramientas" > "Ver registros". Esta función te permite:
+
+- Ver los registros detallados de las operaciones realizadas
+- Seleccionar diferentes archivos de registro por fecha
+- Solucionar problemas en caso de errores
+
+## 🛠️ Compilación del Ejecutable
+
+Si deseas compilar tu propia versión del ejecutable:
+
+```
+pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --icon=datacom_config.ico "DM986-416AX30.py"
+```
+
+## ⚠️ Consideraciones Importantes
+
+- Esta aplicación está diseñada específicamente para el modem Datacom DM986-416AX30
+- Requiere conexión directa al modem (por cable o WiFi)
+- El modem debe ser accesible en la dirección IP 192.168.0.1
+- Se recomienda hacer una copia de seguridad de la configuración del modem antes de usar esta herramienta
+
+## 📜 Licencia
+
+Este proyecto está bajo licencia [MIT](LICENSE).
+
+## 📞 Contacto
+
+Luis Miraglio - miraglioluis1@gmail.com
 
 ---
 
-## 🌐 Compatibilidad con Microsoft Edge
-
-Este ejecutable funciona específicamente con la versión **135.0.3179.85** del navegador **Microsoft Edge**.
-
-### ❌ Si tu versión de Edge es diferente, el programa no funcionará correctamente.
-
----
-
-## ✅ ¿Qué puedo hacer si no tengo esa versión?
-
-Tenés **dos opciones**:
-
-### Opción 1: Instalar la versión compatible de Edge en tu computadora
-
-Podés buscar e instalar manualmente la versión **135.0.3179.85** de Microsoft Edge para garantizar el correcto funcionamiento del ejecutable.
-
-### Opción 2: Reemplazar el driver del proyecto y recompilar
-
-Si preferís usar tu versión actual de Microsoft Edge, podés reemplazar el driver incluido y recompilar el ejecutable. Seguí estos pasos:
-
-1. **Eliminar archivos anteriores del proyecto**:
-   - Borrá el archivo `msedgedriver.exe`.
-   - Borrá también las carpetas `build/`, `dist/` y el archivo `.spec`.
-
-2. **Descargar el driver compatible con tu navegador**:
-   - Abrí Microsoft Edge y accedé a `edge://settings/help` para ver tu versión exacta.
-   - Ingresá a la [página oficial de WebDriver de Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/).
-   - Descargá el archivo `.zip` que corresponda a tu versión de Edge.
-
-3. **Agregar el nuevo driver al proyecto**:
-   - Extraé el archivo `.zip`.
-   - Copiá el archivo `msedgedriver.exe` extraído a la raíz del proyecto, donde está tu archivo `.py`.
-
-4. **Recompilar el ejecutable**:
-   - Abrí el proyecto en **Visual Studio Code**.
-   - Abrí una terminal (integrada con `Ctrl + ñ` o desde el menú `Terminal > Nueva terminal`).
-   - Ejecutá el siguiente comando para compilar nuevamente el ejecutable:
-     ```bash
-     pyinstaller --onefile --add-binary "msedgedriver.exe;." "nombre del archivo.py"
-     ```
-     > Reemplazá `NOMBRE_DEL_SCRIPT.py` por el nombre real de tu archivo Python, por ejemplo: `DM986-416AX30.py`.
-
-5. **Ubicar el nuevo ejecutable**:
-   - Luego de la compilación, se generarán nuevamente las carpetas `build/`, `dist/` y un archivo `.spec`.
-   - Dentro de `dist/` vas a encontrar el nuevo ejecutable listo para usar con la versión actual de tu navegador Edge.
-
-> 💬 Si elegís esta opción y necesitás ayuda para actualizar el driver o volver a compilar el ejecutable, podés ponerte en contacto conmigo.
-
----
-
-## ⬇️ Cómo descargar el proyecto
-
-1. Hacé clic en este enlace: [Descargar ZIP](https://github.com/LuisMiraglio/Script-DATACOM-DM986-416-AX30/archive/refs/heads/main.zip)
-2. Extraé el archivo ZIP en tu computadora.
-3. Entrá a la carpeta `dist/` y ejecutá el archivo **DATACOM_DM986-416AX30.exe**.
-
-> No es necesario instalar nada adicional. Solo asegurate de tener la versión correcta de Microsoft Edge.
-
----
-
-## 🛠️ Requisitos
-
-- Sistema operativo: Windows 10 o superior
-- Microsoft Edge versión 135.0.3179.85 (o compatible con el driver incluido)
-- Acceso de administrador para ejecutar configuraciones en el módem
-
----
-
-## 🧰 Tecnologías usadas
-
-- Python 3
-- Selenium
-- PyInstaller
+⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub! ⭐
