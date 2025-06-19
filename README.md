@@ -7,10 +7,10 @@ El Configurador Automático de Modem Datacom DM986 es una herramienta diseñada 
 ## 📸 Capturas de Pantalla
 
 ### Archivo ejecutable en la carpeta dist
-![Archivo ejecutable](./docs/images/app_executable.PNG)
+<img src="docs/images/app_executable.PNG" alt="Archivo ejecutable" width="600"/>
 
 ### Interfaz principal de la aplicación
-![Interfaz principal](./docs/images/app_interface.PNG)
+<img src="docs/images/app_interface.PNG" alt="Interfaz principal" width="600"/>
 
 ## ✨ Características Principales
 
