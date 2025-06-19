@@ -4,6 +4,14 @@
 
 El Configurador Automático de Modem Datacom DM986 es una herramienta diseñada para simplificar y automatizar el proceso de configuración de modems Datacom DM986-416AX30. Esta aplicación utiliza Selenium para interactuar con la interfaz web del modem, permitiendo configurar en un solo paso diferentes aspectos críticos como la configuración WAN, redes WiFi (2.4GHz y 5GHz) y parámetros de seguridad.
 
+## 📸 Capturas de Pantalla
+
+### Archivo ejecutable en la carpeta dist
+![Archivo ejecutable](./docs/images/app_executable.PNG)
+
+### Interfaz principal de la aplicación
+![Interfaz principal](./docs/images/app_interface.PNG)
+
 ## ✨ Características Principales
 
 - **Configuración WAN automática**:
@@ -85,6 +93,8 @@ Script-DATACOM-DM986-416-AX30/
 ├── datacom_config.ico    # Icono de la aplicación
 ├── build/                # Archivos de compilación
 ├── dist/                 # Ejecutable compilado
+├── docs/                 # Documentación
+│   └── images/           # Imágenes para la documentación
 └── logs/                 # Directorio de logs generados por la aplicación
 ```
 
