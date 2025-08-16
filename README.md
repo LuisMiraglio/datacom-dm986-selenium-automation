@@ -19,10 +19,10 @@ Gracias a esta herramienta, se evita la configuración manual paso a paso y se r
 ## 📸 Capturas de Pantalla
 
 ### Archivo ejecutable en la carpeta dist
-<img src="docs/app_executable.PNG" alt="Archivo ejecutable" width="600"/>
+<img src="docs/images/app_executable.PNG" alt="Archivo ejecutable" width="600"/>
 
 ### Interfaz principal de la aplicación
-<img src="docs/app_interface.PNG" alt="Interfaz principal" width="600"/>
+<img src="docs/images/app_interface.PNG" alt="Interfaz principal" width="600"/>
 
 ## ✨ Características Principales
 
