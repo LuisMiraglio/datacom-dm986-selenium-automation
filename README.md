@@ -104,19 +104,6 @@ Gracias a esta herramienta, se evita la configuración manual paso a paso y se r
 5. Espera a que se complete la configuración (la barra de progreso indicará el avance).
 6. Una ventana de resumen mostrará todas las operaciones realizadas.
 
-## 📂 Estructura del Proyecto
-
-```
-Script-DATACOM-DM986-416-AX30/
-├── DM986-416AX30.py      # Script principal
-├── DM986-416AX30.spec    # Archivo de configuración de PyInstaller
-├── datacom_config.ico    # Icono de la aplicación
-├── build/                # Archivos de compilación
-├── dist/                 # Ejecutable compilado
-├── docs/                 # Documentación
-│   └── images/           # Imágenes para la documentación
-└── logs/                 # Directorio de logs generados por la aplicación
-```
 
 ## 🔍 Visor de Registros
 
@@ -141,9 +128,6 @@ pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hid
 - El modem debe ser accesible en la dirección IP 192.168.0.1
 - Se recomienda hacer una copia de seguridad de la configuración del modem antes de usar esta herramienta
 
-## 📜 Licencia
-
-Este proyecto está bajo licencia [MIT](LICENSE).
 
 ## 📞 Contacto
 
