@@ -1,0 +1,25 @@
+# Ignorar entorno virtual
+venv/
+.env
+*.env
+
+# Ignorar archivos de compilación de PyInstaller
+build/
+*.spec
+
+# Ignorar cachés de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar logs
+logs/
+*.log
+
+# Ignorar configuraciones temporales de IDEs
+.vscode/
+.idea/
+
+# Ignorar pruebas
+main.py

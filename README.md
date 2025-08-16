@@ -2,39 +2,59 @@
 
 ## 📡 Descripción
 
-El Configurador Automático de Modem Datacom DM986 es una herramienta diseñada para simplificar y automatizar el proceso de configuración de modems Datacom DM986-416AX30. Esta aplicación utiliza Selenium para interactuar con la interfaz web del modem, permitiendo configurar en un solo paso diferentes aspectos críticos como la configuración WAN, redes WiFi (2.4GHz y 5GHz) y parámetros de seguridad.
+El **Configurador Automático de Modem Datacom DM986-416AX30** es una herramienta avanzada diseñada para automatizar la configuración completa de este modelo de modem.  
+Desarrollada en **Python** utilizando **Selenium** y con una interfaz gráfica amigable en **Tkinter**, esta aplicación interactúa directamente con la interfaz web del modem, ejecutando de forma automática y en un solo proceso todas las configuraciones necesarias para dejar el equipo listo para uso en entornos de producción.
+
+El script realiza tareas críticas como:
+
+- Configuración **WAN** con soporte para múltiples VLANs (500 y 600).
+- Ajuste y optimización de las redes **WiFi** (2.4GHz y 5GHz).
+- Configuración de seguridad inalámbrica y del panel de administración.
+- Activación y configuración de **TR-069** para gestión remota.
+- Mapeo de puertos y ajustes de rendimiento.
+- Activación de acceso remoto seguro vía HTTPS.
+
+Gracias a esta herramienta, se evita la configuración manual paso a paso y se reducen significativamente los tiempos de provisión del equipo.
 
 ## 📸 Capturas de Pantalla
 
 ### Archivo ejecutable en la carpeta dist
-<img src="app_executable.PNG" alt="Archivo ejecutable" width="600"/>
+<img src="docs/app_executable.PNG" alt="Archivo ejecutable" width="600"/>
 
 ### Interfaz principal de la aplicación
-<img src="app_interface.PNG" alt="Interfaz principal" width="600"/>
+<img src="docs/app_interface.PNG" alt="Interfaz principal" width="600"/>
 
 ## ✨ Características Principales
 
 - **Configuración WAN automática**:
-  - Activación de VLAN con ID 500
-  - Configuración de modo de canal IPoE
-  - Mapeo de puertos automático
+  - Activación de **VLAN 500** y **VLAN 600** con IPoE.
+  - Configuración de modo de canal IPoE.
+  - Mapeo de puertos automático para todos los puertos.
 
 - **Configuración WiFi completa**:
-  - Configuración simultánea de bandas 2.4GHz y 5GHz
-  - Optimización de ancho de canal (40MHz para 2.4GHz y 160MHz para 5GHz)
-  - Configuración de potencia de transmisión al 100%
-  - Selección automática de canales
+  - Configuración simultánea de bandas **2.4GHz** y **5GHz**.
+  - Ancho de canal optimizado:
+    - 2.4GHz: 20/40MHz (modo mixto).
+    - 5GHz: 160MHz.
+  - Potencia de transmisión configurada al **100%**.
+  - Selección automática de canales y DFS para mejor rendimiento.
 
 - **Configuración de Seguridad**:
-  - Establecimiento de contraseñas WPA para redes WiFi
-  - Cambio de contraseña de administrador
-  - Activación de acceso remoto por HTTPS
+  - Establecimiento de contraseñas WPA para redes WiFi.
+  - Cambio de contraseña de administrador.
+  - Activación de acceso remoto seguro vía HTTPS.
+
+- **Gestión remota (TR-069)**:
+  - Configuración de URL del ACS.
+  - Credenciales de conexión para gestión remota.
+  - Aplicación automática de cambios.
 
 - **Funciones adicionales**:
-  - Interfaz gráfica amigable
-  - Sistema de registros (logs) completo
-  - Soporte para múltiples navegadores (Chrome, Edge, Firefox)
-  - Detección automática de navegador disponible
+  - Interfaz gráfica intuitiva y amigable.
+  - Sistema de registros (logs) con visor integrado.
+  - Soporte para múltiples navegadores (Chrome, Edge, Firefox).
+  - Detección automática del navegador disponible.
+  - Resumen detallado de todas las operaciones realizadas.
 
 ## 🔧 Requisitos Previos
 
@@ -60,9 +80,9 @@ El Configurador Automático de Modem Datacom DM986 es una herramienta diseñada 
    git clone https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30.git
    ```
 
-2. Instala las dependencias:
+2. Instala las dependencias desde requirements.txt:
    ```
-   pip install selenium webdriver-manager
+   pip install -r requirements.txt
    ```
 
 3. Ejecuta el script:

@@ -556,6 +556,7 @@ class ConfiguradorModem:
                 )
                 vlan_checkbox.click()
                 logger.info("VLAN activada")
+                time.sleep(2)
                 
                 # Ingresar el número 500 en el campo VLAN ID
                 vid_input = WebDriverWait(driver, 10).until(
@@ -564,6 +565,7 @@ class ConfiguradorModem:
                 vid_input.clear()  # Limpiar el campo antes de ingresar el valor
                 vid_input.send_keys("500")
                 logger.info("VLAN ID configurado a 500")
+                time.sleep(2)
                 
                 # Seleccionar la opción "IPoE" en el menú desplegable "Channel Mode"
                 channel_mode_dropdown = WebDriverWait(driver, 10).until(
@@ -574,6 +576,7 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Modo de canal configurado a IPoE")
                         break
+                time.sleep(2)
                 
                 # Marcar el checkbox "chkpt_all" Port Mapping
                 chkpt_all_checkbox = WebDriverWait(driver, 10).until(
@@ -581,7 +584,8 @@ class ConfiguradorModem:
                 )
                 chkpt_all_checkbox.click()
                 logger.info("Port Mapping activado para todos los puertos")
-                
+                time.sleep(2)
+
                 # Hacer clic en el botón "Apply Changes" después de marcar el checkbox
                 apply_changes_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @value='Apply Changes' and @name='apply']"))
@@ -592,12 +596,116 @@ class ConfiguradorModem:
                 
                 # Volver al contexto principal (por si estamos en un iframe aún)
                 driver.switch_to.default_content()
-                
-                # Esperar a que el menú nav vuelva a estar presente
+
+                # Volver a hacer clic en el enlace "WAN" ACA ARRANQUE A MODIFICAR LOS PASOS NUEVOS PARA EL TR069
+                self.actualizar_estado("Volviendo a la sección WAN...")
                 nav_menu = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "nav"))
                 )
+                wan_link = nav_menu.find_element(By.XPATH, ".//a[@rel='4' and text()='WAN']")
+                wan_link.click()
+                logger.info("Se volvió a hacer clic en la sección WAN")
+                time.sleep(2)
+
+                # Esperar el iframe y cambiar al contexto del iframe
+                content_iframe = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "contentIframe"))
+                )
+                driver.switch_to.frame(content_iframe)
+
+                # Seleccionar la opción "new link" en el select name="lkname"
+                self.actualizar_estado("Seleccionando enlace 'new link' en WAN...")
+                lkname_select = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "lkname"))
+                )
+                for option in lkname_select.find_elements(By.TAG_NAME, "option"):
+                    if option.get_attribute("value") == "new":
+                        option.click()
+                        logger.info("Opción 'new link' seleccionada en lkname")
+                        break
+                time.sleep(1)
+
+                # Hacer clic en el checkbox "vlan" (igual que en WAN la primera vez)
+                self.actualizar_estado("Activando VLAN en el nuevo enlace WAN...")
+                vlan_checkbox_new = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @name='vlan' and @value='ON']"))
+                )
+                vlan_checkbox_new.click()
+                logger.info("VLAN activada en el nuevo enlace WAN")
+                time.sleep(1)
+
+                # Ingresar el número 600 en el campo VLAN ID del nuevo enlace
+                self.actualizar_estado("Configurando VLAN ID a 600 en el nuevo enlace WAN...")
+                vid_input_new = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "vid"))
+                )
+                vid_input_new.clear()
+                vid_input_new.send_keys("600")
+                logger.info("VLAN ID configurado a 600 en el nuevo enlace WAN")
+                time.sleep(2)
+
+                # Seleccionar la opción "IPoE" en el desplegable "Channel Mode" del nuevo enlace
+                self.actualizar_estado("Seleccionando modo de canal IPoE en el nuevo enlace WAN...")
+                channel_mode_dropdown_new = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "adslConnectionMode"))
+                )
+                for option in channel_mode_dropdown_new.find_elements(By.TAG_NAME, "option"):
+                    if option.get_attribute("value") == "1":
+                        option.click()
+                        logger.info("Modo de canal configurado a IPoE en el nuevo enlace WAN")
+                        break
+                time.sleep(2)
+
+                # Seleccionar la opción "TR069" en el desplegable "Connection Type" del nuevo enlace
+                self.actualizar_estado("Seleccionando tipo de conexión TR069 en el nuevo enlace WAN...")
+                ctype_dropdown_new = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "ctype"))
+                )
+                for option in ctype_dropdown_new.find_elements(By.TAG_NAME, "option"):
+                    if option.get_attribute("value") == "1":
+                        option.click()
+                        logger.info("Tipo de conexión configurado a TR069 en el nuevo enlace WAN")
+                        break
+                time.sleep(2)
+
+                # Seleccionar el radio button de DHCP
+                dhcp_radio = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@type='radio' and @name='ipMode' and @value='1']"))
+                )
+                dhcp_radio.click()
+                time.sleep(2)
+
+
+                # Hacer doble clic en el checkbox "ALL"
+                checkbox_all = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @name='chkpt_all']"))
+                )
+
+                # Clic para destildar
+                checkbox_all.click()
+
+                # Esperar a que quede destildado
+                WebDriverWait(driver, 5).until(lambda d: not checkbox_all.is_selected())
+
+                # Clic para volver a tildar (y así se marquen todos)
+                checkbox_all.click()
+                time.sleep(2)
+
+                # Hacer clic en el botón "Apply Changes" para el nuevo enlace WAN
+                self.actualizar_estado("Aplicando cambios en el nuevo enlace WAN (TR069)...")
+                apply_changes_button_new = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='apply' and @value='Apply Changes']"))
+                )
+                apply_changes_button_new.click()
+                logger.info("Cambios aplicados en el nuevo enlace WAN (TR069)")
+                time.sleep(2)
                 
+                #ACA FINALIZA LA PRIMERA PARTE DE LA CONFIGURACION DE LA NUEVA VLAN PARA EL TR069
+                
+                
+                # Volver al contexto principal (por si estamos en un iframe aún)
+                driver.switch_to.default_content()
+
                 # Hacer clic en el enlace "WLAN"
                 self.actualizar_estado("Configurando red WiFi 5GHz...")
                 wlan_link = nav_menu.find_element(By.XPATH, ".//a[@rel='3' and text()='WLAN']")
@@ -617,7 +725,8 @@ class ConfiguradorModem:
                 ssid_input.clear()
                 ssid_input.send_keys(ssid_name)
                 logger.info(f"SSID de 5GHz cambiado a: {ssid_name}")
-                
+                time.sleep(2)
+
                 # Asegurarse de que la opción "160MHz" esté seleccionada en el menú desplegable
                 chanwid_dropdown = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "chanwid"))
@@ -627,6 +736,8 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Ancho de canal de 5GHz configurado a 160MHz")
                         break
+                time.sleep(2)
+
                 
                 # Asegurarse de que la opción "DFS" esté seleccionada en el menú desplegable "chan_select"
                 chan_select_dropdown = WebDriverWait(driver, 10).until(
@@ -637,6 +748,8 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Selección de canal de 5GHz configurada a DFS (automático)")
                         break
+                time.sleep(2)
+
                 
                 # Asegurarse de que la opción "100%" esté seleccionada en el menú desplegable "txpower"
                 txpower_dropdown = WebDriverWait(driver, 10).until(
@@ -647,14 +760,15 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Potencia de transmisión de 5GHz configurada al 100%")
                         break
-                
+                time.sleep(2)
+
                 # Hacer clic en el botón "Apply Changes"
                 apply_changes_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @value='Apply Changes' and @name='save']"))
                 )
                 apply_changes_button.click()
                 logger.info("Cambios aplicados en la sección WLAN de 5GHz")
-                time.sleep(5)
+                time.sleep(10)
                 
                 # Volver al contexto principal (por si estamos en un iframe aún)
                 driver.switch_to.default_content()
@@ -686,6 +800,8 @@ class ConfiguradorModem:
                 wpa_input.clear()
                 wpa_input.send_keys(wpa_password)
                 logger.info("Contraseña WPA de 5GHz configurada")
+                time.sleep(2)
+
                 
                 # Hacer clic en el checkbox para mostrar la contraseña ingresada
                 show_password_checkbox = WebDriverWait(driver, 10).until(
@@ -731,17 +847,18 @@ class ConfiguradorModem:
                 ssid_input_wlan1.clear()
                 ssid_input_wlan1.send_keys(ssid_name)
                 logger.info(f"SSID de 2.4GHz cambiado a: {ssid_name}")
+                time.sleep(2)
                 
                 # Seleccionar la opción "40MHz" en el campo desplegable "chanwid"
                 chanwid_dropdown_wlan1 = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "chanwid"))
                 )
                 for option in chanwid_dropdown_wlan1.find_elements(By.TAG_NAME, "option"):
-                    if option.get_attribute("value") == "1":
+                    if option.get_attribute("value") == "3":
                         option.click()
                         logger.info("Ancho de canal de 2.4GHz configurado a 40MHz")
                         break
-                
+                time.sleep(2)
                 # Seleccionar la opción "Auto" en el campo desplegable "chan_select"
                 chan_select_dropdown_wlan1 = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "chan_select"))
@@ -751,7 +868,7 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Selección de canal de 2.4GHz configurada a Auto")
                         break
-                
+                time.sleep(2)
                 # Seleccionar la opción "100%" en el campo desplegable "txpower"
                 txpower_dropdown_wlan1 = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "txpower"))
@@ -761,14 +878,14 @@ class ConfiguradorModem:
                         option.click()
                         logger.info("Potencia de transmisión de 2.4GHz configurada al 100%")
                         break
-                
+                time.sleep(2)
                 # Hacer clic en el botón "Apply Changes"
                 apply_changes_button_wlan1 = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='save' and @value='Apply Changes']"))
                 )
                 apply_changes_button_wlan1.click()
                 logger.info("Cambios aplicados en la sección WLAN de 2.4GHz")
-                time.sleep(5)
+                time.sleep(10)
                 
                  # Volver al contexto principal por si estamos en un iframe
                 driver.switch_to.default_content()
@@ -799,7 +916,7 @@ class ConfiguradorModem:
                 wpa_input.clear()
                 wpa_input.send_keys(wpa_password)
                 logger.info("Contraseña WPA de 2.4GHz configurada")
-                
+                time.sleep(2)
                 # Hacer clic en el checkbox para mostrar la contraseña ingresada
                 show_password_checkbox = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @onclick='show_password(1)']"))
@@ -821,6 +938,8 @@ class ConfiguradorModem:
                 nav_menu = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "nav"))
                 )
+                
+                #ACA ARRANCA LA CONFIGURACION DE ADMIN
                 
                 # Hacer clic en el enlace 'Admin'
                 self.actualizar_estado("Cambiando contraseña de administrador...")
@@ -855,7 +974,7 @@ class ConfiguradorModem:
                 old_password_input.clear()
                 old_password_input.send_keys(password)
                 logger.info("Contraseña antigua ingresada para cambio")
-                
+                time.sleep(2)
                 # Hacer clic en el checkbox para mostrar la contraseña antigua
                 show_old_password_checkbox = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @onclick='show_password(3)']"))
@@ -869,7 +988,7 @@ class ConfiguradorModem:
                 new_password_input.clear()
                 new_password_input.send_keys(new_password)
                 logger.info("Nueva contraseña ingresada")
-                
+                time.sleep(2)
                 # Hacer clic en el checkbox para mostrar la nueva contraseña
                 show_new_password_checkbox = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @onclick='show_password(1)']"))
@@ -883,7 +1002,7 @@ class ConfiguradorModem:
                 confirmed_password_input.clear()
                 confirmed_password_input.send_keys(new_password)
                 logger.info("Contraseña confirmada ingresada")
-                
+                time.sleep(2)
                 # Hacer clic en el checkbox para mostrar la contraseña confirmada
                 show_confirmed_password_checkbox = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox' and @onclick='show_password(2)']"))
@@ -898,57 +1017,133 @@ class ConfiguradorModem:
                 logger.info("Cambios aplicados en la sección de administración (contraseña)")
                 time.sleep(5)
                 
-                # Volver al contexto principal (por si estamos en un iframe aún)
+                #ACA ARRANCA LA CONFIGURACION PARA TR-069 EN ADMIN
+                
+                # === TR-069 (en Admin) ===
+
+                # 1) Salir de cualquier iframe y re-abrir la pestaña "Admin"
                 driver.switch_to.default_content()
-                
-                # Esperar a que el menú nav vuelva a estar presente
-                nav_menu = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "nav"))
+
+                admin_tab = WebDriverWait(driver, 15).until(
+                    EC.element_to_be_clickable((By.XPATH, "//ul[@id='nav']//a[@href='javascript:void(0)' and @rel='9' and normalize-space()='Admin']"))
                 )
-                
-                # Hacer clic en el enlace 'Advance'
-                self.actualizar_estado("Configurando acceso remoto...")
-                advance_link = WebDriverWait(nav_menu, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, ".//a[@href='javascript:void(0)' and @rel='7' and text()='Advance']"))
-                )
-                advance_link.click()
-                logger.info("Navegando a la sección de configuración avanzada")
-                
-                # Esperar que el menú lateral se cargue
-                side_menu = WebDriverWait(driver, 10).until(
+                admin_tab.click()
+
+                # 2) Esperar el menú lateral y hacer click en TR-069 dentro de #side
+                side_menu = WebDriverWait(driver, 15).until(
                     EC.presence_of_element_located((By.ID, "side"))
                 )
-                
-                # Hacer clic en el enlace 'Remote Access'
-                remote_access_link = WebDriverWait(side_menu, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, ".//a[@target='contentIframe' and @href='rmtacc.asp' and text()='Remote Access']"))
+
+                tr069_link = WebDriverWait(side_menu, 15).until(
+                    EC.element_to_be_clickable((By.XPATH, ".//a[@target='contentIframe' and contains(@href,'tr069config.asp') and normalize-space()='TR-069']"))
                 )
-                remote_access_link.click()
+
+                # Asegurar visibilidad y clicar (con fallback por JS)
+                driver.execute_script("arguments[0].scrollIntoView({block:'center'});", tr069_link)
+                try:
+                    tr069_link.click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", tr069_link)
+
+                # 3) Cambiar al iframe de contenido
+                WebDriverWait(driver, 15).until(
+                    EC.frame_to_be_available_and_switch_to_it((By.ID, "contentIframe"))
+                )
+
+                # 4) Completar campos TR-069
+                url_input = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.NAME, "url")))
+                url_input.clear()
+                url_input.send_keys("http://172.22.16.109:7995/")
+                time.sleep(2)
+
+                username_input = driver.find_element(By.NAME, "username")
+                username_input.clear()
+                username_input.send_keys("admin")
+
+                password_input = driver.find_element(By.NAME, "password")
+                password_input.clear()
+                password_input.send_keys("admin")
+                time.sleep(2)
+                
+                conreq_user = driver.find_element(By.NAME, "conreqname")
+                conreq_user.clear()
+                conreq_user.send_keys("admin")
+
+                conreq_pw = driver.find_element(By.NAME, "conreqpw")
+                conreq_pw.clear()
+                conreq_pw.send_keys("admin")
+                time.sleep(2)
+
+                # 5) Guardar
+                apply_button = WebDriverWait(driver, 15).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='save' and @value='Apply']"))
+                )
+                apply_button.click()
+                time.sleep(5)
+                # === fin TR-069 ===
+                
+                # --- tras Apply en TR-069 ---
+                # (1) Si aparece un alert de confirmación, aceptarlo
+                try:
+                    WebDriverWait(driver, 3).until(EC.alert_is_present())
+                    driver.switch_to.alert.accept()
+                except Exception:
+                    pass  # no hubo alert
+
+                # (2) Salir del iframe y reubicar el menú principal
+                driver.switch_to.default_content()
+
+                nav_menu = WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.ID, "nav"))
+                )
+
+                # (3) Click en la pestaña "Advance"
+                advance_tab = WebDriverWait(nav_menu, 15).until(
+                    EC.element_to_be_clickable((By.XPATH, ".//a[@href='javascript:void(0)' and @rel='7' and normalize-space()='Advance']"))
+                )
+                try:
+                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", advance_tab)
+                    advance_tab.click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", advance_tab)
+
+                logger.info("Navegando a la sección de configuración avanzada")
+
+                # (4) Esperar menú lateral y entrar a Remote Access
+                side_menu = WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.ID, "side"))
+                )
+
+                remote_access_link = WebDriverWait(side_menu, 15).until(
+                    EC.element_to_be_clickable((By.XPATH, ".//a[@target='contentIframe' and @href='rmtacc.asp' and normalize-space()='Remote Access']"))
+                )
+                try:
+                    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", remote_access_link)
+                    remote_access_link.click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", remote_access_link)
+
                 logger.info("Navegando a la sección de acceso remoto")
-                
-                # Cambiar al iframe 'contentIframe'
-                content_iframe = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "contentIframe"))
+
+                # (5) Cambiar al iframe de contenido y activar HTTPS
+                WebDriverWait(driver, 15).until(
+                    EC.frame_to_be_available_and_switch_to_it((By.ID, "contentIframe"))
                 )
-                driver.switch_to.frame(content_iframe)
-                
-                # Hacer clic en el checkbox 'w_https'
-                https_wan_checkbox = WebDriverWait(driver, 10).until(
+
+                https_wan_checkbox = WebDriverWait(driver, 15).until(
                     EC.element_to_be_clickable((By.NAME, "w_https"))
                 )
-                https_wan_checkbox.click()
+                if not https_wan_checkbox.is_selected():
+                    https_wan_checkbox.click()
                 logger.info("Acceso remoto por HTTPS activado")
-                
-                # Hacer clic en el botón "Apply Changes"
-                apply_changes_button = WebDriverWait(driver, 10).until(
+
+                apply_changes_button = WebDriverWait(driver, 15).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='set' and @value='Apply Changes']"))
                 )
                 apply_changes_button.click()
                 logger.info("Cambios aplicados en la sección de acceso remoto")
-                
-                # Detener la barra de progreso
-                self.progress.stop()
-                
+                # --- fin Advance/Remote Access ---
+
                 # Crear un resumen detallado de las operaciones realizadas
                 resumen_operaciones = f"""
 RESUMEN DE OPERACIONES REALIZADAS:
@@ -991,10 +1186,9 @@ RESUMEN DE OPERACIONES REALIZADAS:
                 messagebox.showerror("Error durante la configuración", error_msg)
                 self.actualizar_estado(f"ERROR: {str(e)}")
             finally:
-                # Cerrar navegador
-                self.actualizar_estado("Cerrando el navegador...")
-                logger.info("Cerrando el navegador")
+                input("Presiona ENTER para cerrar el navegador...")
                 driver.quit()
+
                 # Restaurar botones
                 if hasattr(self, 'configure_button'):
                     self.configure_button.config(state="normal")
@@ -1241,4 +1435,4 @@ if __name__ == "__main__":
                            f"Consulte los logs para más detalles.")
 
 # Comando para compilar el script en un ejecutable (PyInstaller)
-# pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --icon=datacom_config.ico "DM986-AX30.py"
+# pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --icon=datacom_config.ico "DM986-416AX30.py"
