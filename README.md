@@ -14,12 +14,13 @@ El script realiza tareas críticas como:
 - Mapeo de puertos y ajustes de rendimiento.
 - Activación de acceso remoto seguro vía HTTPS.
 
+- Salida útil: al finalizar, se guarda un .txt con SSID, contraseña Wi-Fi y contraseña de administrador en
+Documentos/Datacom Configuradas/ (Windows).
+En caso de error, se guardan capturas (.png y .html) en Documentos/Datacom Configuradas/Errores/.
+
 Gracias a esta herramienta, se evita la configuración manual paso a paso y se reducen significativamente los tiempos de provisión del equipo.
 
 ## 📸 Capturas de Pantalla
-
-### Archivo ejecutable en la carpeta dist
-<img src="docs/images/app_executable.png" alt="Archivo ejecutable" width="600"/>
 
 ### Interfaz principal de la aplicación
 <img src="docs/images/app_interface.png" alt="Interfaz principal" width="600"/>
@@ -58,75 +59,70 @@ Gracias a esta herramienta, se evita la configuración manual paso a paso y se r
 
 ## 🔧 Requisitos Previos
 
-- Windows 7/8/10/11
-- Python 3.6 o superior (para ejecutar desde código fuente)
-- Conexión directa al modem Datacom DM986-416AX30
-- Al menos uno de los siguientes navegadores:
-  - Google Chrome (recomendado)
-  - Microsoft Edge
-  - Mozilla Firefox
+- Windows 10/11
+- Python 3.8+ (solo si corrés desde código fuente)
+- Uno de los navegadores soportados instalado (Chrome recomendado)
 
-## 📥 Instalación
 
-### Opción 1: Ejecutable compilado (recomendado para usuarios finales)
+### 📥 Instalación (código fuente)
 
-1. Descarga la última versión del ejecutable desde la [sección de Releases](https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30/releases)
-2. Ejecuta el archivo `DM986-416AX30.exe`
+1. Clonar el repo:
+  ```
+  git clone https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30.git
+cd Script-DATACOM-DM986-416-AX30
+ ```
 
-### Opción 2: Desde código fuente (para desarrolladores)
+2. (Opcional) Crear entorno virtual e instalar dependencias:
+  ```
+  python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+ ```
 
-1. Clona este repositorio:
-   ```
-   git clone https://github.com/tuusuario/Script-DATACOM-DM986-416-AX30.git
-   ```
-
-2. Instala las dependencias desde requirements.txt:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Ejecuta el script:
-   ```
-   python DM986-416AX30.py
-   ```
-
+3. 
+  ```
+python DM986-416AX30.py
+```
 ## 🚀 Uso
 
-1. Inicia la aplicación ejecutando `DM986-416AX30.exe` o desde código fuente.
-2. Selecciona el navegador que deseas utilizar (Google Chrome es recomendado).
-3. Completa todos los campos del formulario:
-   - Nombre de usuario del modem (por defecto: "admin")
-   - Contraseña actual del modem
-   - Nombre de red WiFi (SSID) deseado
-   - Contraseña WPA para la red WiFi
+1. Abrí la aplicación (desde el .py o desde el .exe si compilaste).
+2. Elegí el navegador.
+3. Completá los campos:
+   - Usuario y contraseña actual del modem
+   - SSID y contraseña WPA
    - Nueva contraseña de administrador
 4. Haz clic en "Configurar Modem" para iniciar el proceso automático.
-5. Espera a que se complete la configuración (la barra de progreso indicará el avance).
-6. Una ventana de resumen mostrará todas las operaciones realizadas.
+5. Verificá el archivo .txt generado en Documentos/Datacom Configuradas/.
+   - Nota: si usás Chrome o Edge, la app está configurada para dejar la ventana del navegador abierta (modo detach) al terminar, para que puedas revisar la configuración. Cerrala manualmente cuando termines.
 
 
-## 🔍 Visor de Registros
+## 🔍 Logs y diagnósticos
 
 La aplicación incluye un visor de registros (logs) que puedes acceder desde el menú "Herramientas" > "Ver registros". Esta función te permite:
 
-- Ver los registros detallados de las operaciones realizadas
-- Seleccionar diferentes archivos de registro por fecha
-- Solucionar problemas en caso de errores
+- Visor de logs: Herramientas → Ver registros (logs diarios en ./logs/ del proyecto).
+- HTML de la página: error_YYYYMMDD_HHMMSS.html
+en Documentos/Datacom Configuradas/Errores/.
 
-## 🛠️ Compilación del Ejecutable
+
+## 🛠️ Compilación (PyInstaller)
 
 Si deseas compilar tu propia versión del ejecutable:
 
-```
-pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --icon=datacom_config.ico "DM986-416AX30.py"
-```
+La compilación genera dos carpetas en la raíz del proyecto:
+ - build/ – artefactos intermedios
+ - dist/ – acá queda el ejecutable (.exe)
 
-## ⚠️ Consideraciones Importantes
 
-- Esta aplicación está diseñada específicamente para el modem Datacom DM986-416AX30
-- Requiere conexión directa al modem (por cable o WiFi)
-- El modem debe ser accesible en la dirección IP 192.168.0.1
-- Se recomienda hacer una copia de seguridad de la configuración del modem antes de usar esta herramienta
+Comando recomendado (Windows PowerShell/CMD)
+```
+    pyinstaller --onefile --noconsole --icon=datacom_config.ico --add-data "datacom_config.ico;." --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --name "Configurador Datacom DM986" "DM986-416AX30.py"
+  ```
+
+## ⚠️ Consideraciones
+  - Diseñado específicamente para Datacom DM986-416AX30 en 192.168.0.1.
+  - Ejecutar conectado al equipo (idealmente por cable de red).
+  - Las opciones del navegador están preparadas para ignorar certificados (interfaz HTTPS del modem).
 
 
 ## 📞 Contacto

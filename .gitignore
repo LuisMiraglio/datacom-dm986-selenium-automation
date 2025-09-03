@@ -1,25 +1,27 @@
-# Ignorar entorno virtual
+# Entorno virtual
 venv/
 .env
 *.env
 
-# Ignorar archivos de compilación de PyInstaller
+# Build / distribución
 build/
+dist/
 *.spec
 
-# Ignorar cachés de Python
+# Cachés de Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Ignorar logs
+# Logs
 logs/
 *.log
 
-# Ignorar configuraciones temporales de IDEs
+# Configs de IDE
 .vscode/
 .idea/
 
-# Ignorar pruebas
+# Archivos que no deben versionarse
+backup.txt
 main.py
