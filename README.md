@@ -96,7 +96,7 @@ python DM986-416AX30.py
    - Nota: si usás Chrome o Edge, la app está configurada para dejar la ventana del navegador abierta (modo detach) al terminar, para que puedas revisar la configuración. Cerrala manualmente cuando termines.
 
 
-## 🔍 Logs y diagnósticos
+## 🔍 Logs y diagnósticos 🗂️
 
 La aplicación incluye un visor de registros (logs) que puedes acceder desde el menú "Herramientas" > "Ver registros". Esta función te permite:
 

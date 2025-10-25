@@ -778,20 +778,17 @@ class ConfiguradorModem:
             self.safe_messagebox("Error de inicialización", error_msg, kind="error")
             self.actualizar_estado(f"ERROR: {str(e)}")
         finally:
-            # NO cerrar el navegador para poder revisarlo manualmente
+            # Cerrar navegador
             try:
                 if 'driver' in locals() and driver:
-                    # Para Chrome/Edge, con detach=True el navegador queda abierto.
-                    # Para Firefox, no llamamos quit() (queda abierto mientras la app siga viva).
-                    pass
+                    driver.quit()
             except Exception as e:
-                logger.warning(f"No se pudo gestionar el navegador al finalizar: {e}")
+                logger.warning(f"No se pudo cerrar el navegador: {e}")
 
             # Restaurar UI
             self.set_buttons_enabled(True)
             self.stop_progress()
-            logger.info("Proceso de configuración finalizado. El navegador queda abierto; cerralo con la ❌ cuando termines.")
-
+            logger.info("Proceso de configuración finalizado")
 
     # ===== Guardado en carpeta única "Datacom Configuradas" =====
     def guardar_resumen_configuracion(self, ssid: str, wpa: str, admin_pass: str) -> str:
@@ -939,5 +936,4 @@ if __name__ == "__main__":
                              f"Consulte los logs para más detalles.")
 
 # Para compilar (ejemplo):
-# pyinstaller --onefile --noconsole --icon=datacom_config.ico --add-data "datacom_config.ico;." --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --name "Configurador Datacom DM986" "DM986-416AX30.py"
-
+# pyinstaller --onefile --noconsole --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --icon=datacom_config.ico "DM986-416AX30.py"
