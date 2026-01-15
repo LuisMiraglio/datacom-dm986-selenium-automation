@@ -21,6 +21,11 @@ from PySide6.QtWidgets import (
     QCheckBox, QDialog, QDialogButtonBox
 )
 
+APP_NAME = "DATACOM DM986"
+APP_SUBTITLE = "Configurador Automático"
+APP_VERSION = "v1.0"
+
+
 # =========================
 # (Opcional) Verificar deps
 # =========================
@@ -31,10 +36,8 @@ def ensure_dependency(module_name: str, pip_name: str):
         __import__(module_name)
         return True
     except ImportError:
-        # En modo compilado, no intentes pip install.
         if getattr(sys, 'frozen', False):
             return False
-        # En modo script, si querés, podés intentar instalar:
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", pip_name])
             return True
@@ -43,7 +46,7 @@ def ensure_dependency(module_name: str, pip_name: str):
 
 
 # =========================
-# Logger (igual idea original)
+# Logger
 # =========================
 def get_app_dir() -> str:
     if getattr(sys, 'frozen', False):
@@ -88,7 +91,7 @@ logger.info("=== Iniciando Configurador Automático de Modem Datacom DM986 (PySi
 
 
 # =========================
-# Pasos para checklist UI
+# Pasos (checklist)
 # =========================
 STEP_ORDER = [
     "init_driver",
@@ -167,7 +170,7 @@ class ConfigWorker(QObject):
     def get_browser_name(self, choice: str) -> str:
         return {"1": "Google Chrome", "2": "Microsoft Edge", "3": "Firefox", "4": "Autodetectar"}.get(choice, "Desconocido")
 
-    # ===== Guardado resumen (igual, carpeta única Documents) =====
+    # ===== Guardado resumen =====
     def guardar_resumen_configuracion(self, ssid: str, wpa: str, admin_pass: str) -> str:
         try:
             ahora = datetime.datetime.now()
@@ -233,13 +236,12 @@ class ConfigWorker(QObject):
         driver = None
 
         try:
-            # Validar dependencias base en runtime (por si corre como script)
             ok_selenium = ensure_dependency("selenium", "selenium")
             ok_wdm = ensure_dependency("webdriver_manager", "webdriver-manager")
             if not ok_selenium or not ok_wdm:
                 raise Exception("Faltan dependencias (selenium / webdriver-manager). Reinstalá o recompilá incluyendo esas libs.")
 
-            # Imports dentro del worker (evita fallos al abrir UI sin Selenium instalado)
+            # Imports dentro del worker
             from selenium import webdriver
             from selenium.webdriver.common.by import By
             from selenium.webdriver.chrome.service import Service as ChromeService
@@ -262,10 +264,9 @@ class ConfigWorker(QObject):
             wpa_password = self.cfg.wpa
             new_password = self.cfg.new_admin
 
-            logger.info(f"Navegador seleccionado: {self.get_browser_name(browser_choice)}")
             self._status("Iniciando configuración…")
             self._log(f"Navegador: {self.get_browser_name(browser_choice)}")
-            # NO logueamos contraseñas.
+            self._log(f"SSID: {ssid_name}")
 
             # Setup driver
             def setup_driver():
@@ -828,12 +829,9 @@ class ConfigWorker(QObject):
             logger.error(msg)
             logger.error(traceback.format_exc())
 
-            # Marcar último step run como error (si corresponde)
-            # Si no sabemos cuál, dejamos sin “err” específico.
             self._status("Error durante la configuración ❌")
             self._log("ERROR: " + msg)
 
-            # Guardar diagnósticos si hay driver
             try:
                 if driver:
                     self._save_error_diagnostics(driver)
@@ -859,7 +857,7 @@ class LogsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Visor de Logs - Configurador Datacom")
-        self.setMinimumSize(860, 560)
+        self.setMinimumSize(900, 580)
 
         layout = QVBoxLayout(self)
 
@@ -867,6 +865,9 @@ class LogsDialog(QDialog):
         self.cmb = QComboBox()
         self.btn_load = QPushButton("Cargar")
         self.btn_refresh = QPushButton("Actualizar")
+        self.btn_load.setObjectName("secondaryButton")
+        self.btn_refresh.setObjectName("secondaryButton")
+
         top.addWidget(QLabel("Archivo:"))
         top.addWidget(self.cmb, 1)
         top.addWidget(self.btn_load)
@@ -924,22 +925,22 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DATACOM DM986 · Configurador Automático")
-        self.setMinimumSize(1040, 660)
+        self.setWindowTitle(f"{APP_NAME} · {APP_SUBTITLE}")
+        self.setMinimumSize(1100, 700)
 
-        # Icono (si existe)
+        # icono
         try:
             if os.path.exists("datacom_config.ico"):
                 self.setWindowIcon(QIcon("datacom_config.ico"))
         except Exception:
             pass
 
-        # Fuente base
         QApplication.instance().setFont(QFont("Segoe UI", 10))
 
         # Menú
         menubar = self.menuBar()
         menu_tools = menubar.addMenu("Herramientas")
+
         act_logs = QAction("Ver registros", self)
         act_logs.triggered.connect(self.open_logs_dialog)
         menu_tools.addAction(act_logs)
@@ -952,22 +953,43 @@ class MainWindow(QMainWindow):
         act_open_configs_folder.triggered.connect(self.open_configs_folder)
         menu_tools.addAction(act_open_configs_folder)
 
-        # Central layout
+        # Central
         central = QWidget()
         self.setCentralWidget(central)
 
-        root = QHBoxLayout(central)
-        root.setContentsMargins(14, 14, 14, 14)
-        root.setSpacing(14)
+        main = QVBoxLayout(central)
+        main.setContentsMargins(14, 14, 14, 14)
+        main.setSpacing(12)
 
-        # Left panel (config)
+        # ===== Header pro =====
+        header = QFrame()
+        header.setObjectName("headerCard")
+        hb = QHBoxLayout(header)
+        hb.setContentsMargins(14, 12, 14, 12)
+
+        title_box = QVBoxLayout()
+        self.lbl_title = QLabel(f"{APP_NAME}")
+        self.lbl_title.setObjectName("appTitle")
+        self.lbl_sub = QLabel(f"{APP_SUBTITLE} · {APP_VERSION}")
+        self.lbl_sub.setObjectName("appSubtitle")
+
+        title_box.addWidget(self.lbl_title)
+        title_box.addWidget(self.lbl_sub)
+
+        hb.addLayout(title_box, 1)
+
+        main.addWidget(header)
+
+        # ===== 2 columnas =====
+        root = QHBoxLayout()
+        root.setSpacing(14)
+        main.addLayout(root, 1)
+
+        # Left
         left = QVBoxLayout()
         left.setSpacing(12)
 
-        t1 = QLabel("Configuración")
-        t1.setStyleSheet("font-size: 18px; font-weight: 700;")
-        left.addWidget(t1)
-
+        # Navegador
         gb_browser = QGroupBox("Navegador")
         vb_b = QVBoxLayout(gb_browser)
         self.cmb_browser = QComboBox()
@@ -980,6 +1002,7 @@ class MainWindow(QMainWindow):
         vb_b.addWidget(self.cmb_browser)
         left.addWidget(gb_browser)
 
+        # Datos (labels reales, no placeholders “raros”)
         gb_data = QGroupBox("Datos de configuración")
         grid = QGridLayout(gb_data)
         grid.setHorizontalSpacing(10)
@@ -990,6 +1013,13 @@ class MainWindow(QMainWindow):
         self.ed_ssid = QLineEdit()
         self.ed_wpa = QLineEdit(); self.ed_wpa.setEchoMode(QLineEdit.Password)
         self.ed_new_admin = QLineEdit(); self.ed_new_admin.setEchoMode(QLineEdit.Password)
+
+        # Placeholders (opcionales, pero útiles)
+        self.ed_user.setPlaceholderText("Ej: admin")
+        self.ed_ssid.setPlaceholderText("Ej: Conectar_5G")
+        self.ed_pass.setPlaceholderText("Contraseña actual")
+        self.ed_wpa.setPlaceholderText("Contraseña WiFi")
+        self.ed_new_admin.setPlaceholderText("Nueva contraseña admin")
 
         grid.addWidget(QLabel("Usuario del modem"), 0, 0)
         grid.addWidget(self.ed_user, 0, 1)
@@ -1012,28 +1042,28 @@ class MainWindow(QMainWindow):
 
         left.addWidget(gb_data)
 
+        # Botones (jerarquía pro)
         self.btn_run = QPushButton("Iniciar configuración")
-        self.btn_run.setMinimumHeight(42)
+        self.btn_run.setMinimumHeight(44)
+        self.btn_run.setObjectName("primaryButton")
         self.btn_run.clicked.connect(self.on_run_clicked)
 
         self.btn_open_configs = QPushButton("Abrir carpeta 'Datacom Configuradas'")
+        self.btn_open_configs.setObjectName("secondaryButton")
         self.btn_open_configs.clicked.connect(self.open_configs_folder)
 
         left.addWidget(self.btn_run)
         left.addWidget(self.btn_open_configs)
         left.addStretch(1)
 
-        # Right panel (execution)
+        # Right
         right = QVBoxLayout()
         right.setSpacing(12)
-
-        t2 = QLabel("Ejecución")
-        t2.setStyleSheet("font-size: 18px; font-weight: 700;")
-        right.addWidget(t2)
 
         gb_steps = QGroupBox("Pasos")
         vb_steps = QVBoxLayout(gb_steps)
         self.list_steps = QListWidget()
+        self.list_steps.setObjectName("stepsList")
         vb_steps.addWidget(self.list_steps)
         right.addWidget(gb_steps, 2)
 
@@ -1041,31 +1071,39 @@ class MainWindow(QMainWindow):
         vb_console = QVBoxLayout(gb_console)
         self.console = QTextEdit()
         self.console.setReadOnly(True)
-        self.console.setStyleSheet("font-family: Consolas; font-size: 10px;")
+        self.console.setObjectName("consoleBox")
         vb_console.addWidget(self.console)
         right.addWidget(gb_console, 3)
-
-        bottom = QFrame()
-        bottom.setFrameShape(QFrame.StyledPanel)
-        hb_bottom = QHBoxLayout(bottom)
-        hb_bottom.setContentsMargins(10, 10, 10, 10)
-
-        self.lbl_status = QLabel("Listo para iniciar.")
-        self.pb = QProgressBar()
-        self.pb.setRange(0, 0)
-        self.pb.setVisible(False)
-
-        hb_bottom.addWidget(self.lbl_status, 1)
-        hb_bottom.addWidget(self.pb, 0)
-        right.addWidget(bottom)
 
         root.addLayout(left, 1)
         root.addLayout(right, 2)
 
+        # ===== Footer / Status =====
+        footer = QFrame()
+        footer.setObjectName("footerCard")
+        hb_footer = QHBoxLayout(footer)
+        hb_footer.setContentsMargins(12, 10, 12, 10)
+
+        self.lbl_status = QLabel("Listo para iniciar.")
+        self.lbl_status.setObjectName("statusText")
+
+        self.pb = QProgressBar()
+        self.pb.setRange(0, 0)  # indeterminado
+        self.pb.setVisible(False)
+        self.pb.setFixedWidth(240)
+
+        hb_footer.addWidget(self.lbl_status, 1)
+        hb_footer.addWidget(self.pb, 0)
+
+        main.addWidget(footer)
+
         # Steps init
         self._step_items: Dict[str, QListWidgetItem] = {}
+        self._current_running_step: Optional[str] = None
+
         for key in STEP_ORDER:
-            item = QListWidgetItem(f"{STATUS_ICON['idle']}  {STEP_LABELS[key]}")
+            item = QListWidgetItem(self._format_step_text(key, "idle"))
+            item.setData(Qt.UserRole, key)
             self.list_steps.addItem(item)
             self._step_items[key] = item
 
@@ -1073,37 +1111,100 @@ class MainWindow(QMainWindow):
         self._thread: Optional[QThread] = None
         self._worker: Optional[ConfigWorker] = None
 
-        # Style
+        # ===== Style (clean + pro) =====
         self.setStyleSheet("""
             QMainWindow { background: #F7F9FC; }
-            QGroupBox { background: white; border: 1px solid #E5E7EB; border-radius: 12px; margin-top: 10px; font-weight: 600; }
+
+            QFrame#headerCard, QFrame#footerCard {
+                background: white;
+                border: 1px solid #E5E7EB;
+                border-radius: 14px;
+            }
+
+            QLabel#appTitle { font-size: 18px; font-weight: 800; }
+            QLabel#appSubtitle { color: #6B7280; font-size: 11px; }
+
+            QGroupBox {
+                background: white;
+                border: 1px solid #E5E7EB;
+                border-radius: 14px;
+                margin-top: 10px;
+                font-weight: 700;
+            }
             QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; }
+
             QLineEdit, QComboBox {
                 background: white;
                 border: 1px solid #D1D5DB;
-                border-radius: 10px;
-                padding: 8px;
+                border-radius: 12px;
+                padding: 9px;
             }
-            QPushButton {
+
+            QPushButton#primaryButton {
                 background: #1976D2;
                 color: white;
                 border: none;
-                border-radius: 12px;
-                padding: 10px;
+                border-radius: 14px;
+                padding: 12px;
+                font-weight: 800;
+            }
+            QPushButton#primaryButton:disabled { background: #9CA3AF; }
+
+            QPushButton#secondaryButton {
+                background: transparent;
+                color: #111827;
+                border: 1px solid #D1D5DB;
+                border-radius: 14px;
+                padding: 12px;
                 font-weight: 700;
             }
-            QPushButton:disabled { background: #9CA3AF; }
-            QListWidget, QTextEdit {
+            QPushButton#secondaryButton:disabled {
+                color: #9CA3AF;
+                border-color: #E5E7EB;
+            }
+
+            QListWidget#stepsList {
                 background: white;
                 border: 1px solid #E5E7EB;
-                border-radius: 12px;
+                border-radius: 14px;
+                padding: 6px;
             }
-            QFrame {
-                background: white;
-                border: 1px solid #E5E7EB;
-                border-radius: 12px;
+            QListWidget#stepsList::item {
+                padding: 8px;
+                border-radius: 10px;
             }
+            QListWidget#stepsList::item:selected {
+                background: #EEF2FF;
+            }
+
+            QTextEdit#consoleBox {
+                background: #0B1220;
+                color: #E5E7EB;
+                border: 1px solid #111827;
+                border-radius: 14px;
+                padding: 10px;
+                font-family: Consolas;
+                font-size: 10px;
+            }
+
+            QLabel#statusText { font-weight: 700; }
         """)
+
+    # ===== helpers UI =====
+    def _format_step_text(self, key: str, st: str) -> str:
+        return f"{STATUS_ICON.get(st, '⏳')}  {STEP_LABELS.get(key, key)}"
+
+    def _clear_step_highlights(self):
+        for k, item in self._step_items.items():
+            # Reset background
+            item.setBackground(Qt.transparent)
+
+    def _highlight_running_step(self, key: Optional[str]):
+        self._clear_step_highlights()
+        if key and key in self._step_items:
+            item = self._step_items[key]
+            # Fondo suave para el paso actual
+            item.setBackground(QtGuiColor("#EEF2FF"))  # se setea con helper abajo
 
     def on_toggle_show_passwords(self):
         show = self.chk_show.isChecked()
@@ -1127,7 +1228,6 @@ class MainWindow(QMainWindow):
 
     def browser_choice_value(self) -> str:
         idx = self.cmb_browser.currentIndex()
-        # 0 chrome, 1 edge, 2 firefox, 3 autodetect
         return {0: "1", 1: "2", 2: "3", 3: "4"}.get(idx, "1")
 
     def on_run_clicked(self):
@@ -1146,9 +1246,10 @@ class MainWindow(QMainWindow):
         )
 
         self.console.clear()
-        self.append_log("Iniciando proceso…")
+        self.append_log(">> Iniciando proceso…")
         logger.info("Iniciando proceso desde UI")
 
+        self._current_running_step = None
         for key in STEP_ORDER:
             self.update_step(key, "idle")
 
@@ -1164,7 +1265,6 @@ class MainWindow(QMainWindow):
         self._worker.finished_ok.connect(self.on_finished_ok)
         self._worker.finished_err.connect(self.on_finished_err)
 
-        # Cleanup
         self._worker.finished_ok.connect(self._thread.quit)
         self._worker.finished_err.connect(self._thread.quit)
         self._thread.finished.connect(self._thread.deleteLater)
@@ -1179,8 +1279,15 @@ class MainWindow(QMainWindow):
             w.setEnabled(not busy)
         self.btn_open_configs.setEnabled(not busy)
 
+        if busy:
+            self.btn_run.setText("Configurando…")
+        else:
+            self.btn_run.setText("Iniciar configuración")
+
     def append_log(self, msg: str):
-        self.console.append(msg)
+        # Timestamp (pro)
+        ts = datetime.datetime.now().strftime("%H:%M:%S")
+        self.console.append(f"[{ts}] {msg}")
         self.console.verticalScrollBar().setValue(self.console.verticalScrollBar().maximum())
 
     def set_status(self, msg: str):
@@ -1190,11 +1297,50 @@ class MainWindow(QMainWindow):
         item = self._step_items.get(key)
         if not item:
             return
-        item.setText(f"{STATUS_ICON.get(st, '⏳')}  {STEP_LABELS.get(key, key)}")
+
+        item.setText(self._format_step_text(key, st))
+
+        # Resaltar paso en ejecución
+        if st == "run":
+            self._current_running_step = key
+            self._apply_running_highlight(key)
+            # también centramos el paso para que se vea siempre
+            self.list_steps.scrollToItem(item)
+        else:
+            # si dejó de estar en run, limpiamos el highlight si era el actual
+            if self._current_running_step == key and st in ("ok", "err", "idle"):
+                self._current_running_step = None
+                self._clear_running_highlight()
+
+            # si hay error, marcamos ese item con fondo suave rojo
+            if st == "err":
+                item.setBackground(QtGuiColor("#FEE2E2"))
+
+            # si ok, fondo suave verde
+            if st == "ok":
+                item.setBackground(QtGuiColor("#DCFCE7"))
+
+            # si idle y no tiene fondo (reset)
+            if st == "idle":
+                item.setBackground(Qt.transparent)
+
+    def _clear_running_highlight(self):
+        # no borramos verdes/rojos, solo quitamos el “run”
+        for key, item in self._step_items.items():
+            # Si era run, lo dejamos transparente (si no está ok/err)
+            # Como ok/err ya setean fondo, esto no los pisa.
+            # Para run usamos un color específico y lo removemos.
+            pass
+        # no hacemos nada global; la lógica de ok/err ya “pinta” cada item.
+
+    def _apply_running_highlight(self, key: str):
+        # fondo suave azul para el paso actual en ejecución
+        if key in self._step_items:
+            self._step_items[key].setBackground(QtGuiColor("#E0F2FE"))
 
     def on_finished_ok(self, saved_path: str):
         self.set_status("Proceso completado ✅")
-        self.append_log("Proceso completado ✅")
+        self.append_log(">> Proceso completado ✅")
         if saved_path:
             self.append_log(f"Resumen guardado en: {saved_path}")
             QMessageBox.information(self, "Finalizado", f"Configuración completada.\n\nResumen:\n{saved_path}")
@@ -1204,7 +1350,7 @@ class MainWindow(QMainWindow):
 
     def on_finished_err(self, msg: str):
         self.set_status("Error en el proceso ❌")
-        self.append_log("ERROR: " + msg)
+        self.append_log(">> ERROR: " + msg)
         QMessageBox.critical(self, "Error", f"Ocurrió un error durante la configuración:\n\n{msg}\n\nRevisá logs para más detalles.")
         logger.error(f"Proceso finalizó con error: {msg}")
 
@@ -1224,6 +1370,12 @@ class MainWindow(QMainWindow):
         base_dir = os.path.join(documentos, "Datacom Configuradas")
         os.makedirs(base_dir, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(base_dir))
+
+
+# Helper: QtGui QColor sin importar QtGui globalmente
+def QtGuiColor(hex_color: str):
+    from PySide6.QtGui import QColor
+    return QColor(hex_color)
 
 
 def main():
