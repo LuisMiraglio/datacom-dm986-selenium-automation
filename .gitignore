@@ -1,5 +1,6 @@
 # Entorno virtual
 venv/
+.venv/
 .env
 *.env
 
@@ -15,13 +16,12 @@ __pycache__/
 *.pyd
 
 # Logs
-logs/
-*.log
+logs/*
+!logs/.gitkeep
 
 # Configs de IDE
 .vscode/
 .idea/
 
-# Archivos que no deben versionarse
+# Archivos legacy / basura
 backup.txt
-main.py
