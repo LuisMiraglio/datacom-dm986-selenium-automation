@@ -81,7 +81,7 @@ class MainApp:
 
         # Icono (opcional)
         try:
-            self.root.iconbitmap("datacom_config.ico")
+            self.root.iconbitmap("assets/icons/icono.ico")
         except Exception:
             pass
 
