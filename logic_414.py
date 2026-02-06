@@ -1,4 +1,4 @@
-# logic_414.py
+# logica para configurar Datacom DM986-414 via Selenium
 import time
 import traceback
 

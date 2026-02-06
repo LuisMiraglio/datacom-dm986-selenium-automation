@@ -2,14 +2,19 @@
 import threading
 import tkinter as tk
 from tkinter import ttk, font
-
 from tkinter import messagebox  # usado en safe_messagebox
+
 from logic_414 import ConfiguradorModem414
 
 try:
     from logic_416 import ConfiguradorModem416
 except Exception:
     ConfiguradorModem416 = None
+
+try:
+    from logic_414Q import ConfiguradorModem414Q
+except Exception:
+    ConfiguradorModem414Q = None
 
 
 # =========================
@@ -93,7 +98,7 @@ class MainApp:
         # Variables
         self.modelo = tk.StringVar(value="DM986-416 AX30")
 
-        # ✅ CAMBIO: navegador ahora es texto (para Combobox)
+        # ✅ navegador ahora es texto (para Combobox)
         self.browser_choice = tk.StringVar(value="Google Chrome (recomendado)")
 
         self.username = tk.StringVar()
@@ -148,12 +153,12 @@ class MainApp:
             state="readonly",
             width=28,
             textvariable=self.modelo,
-            values=["DM986-416 AX30", "DM986-414"]
+            values=["DM986-416 AX30", "DM986-414", "DM986-414 Q"]
         )
         self.cb_model.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
         self.cb_model.bind("<<ComboboxSelected>>", self._on_model_change)
 
-        # ===== Navegador (✅ CAMBIO A COMBOBOX) =====
+        # ===== Navegador =====
         browser_frame = ttk.LabelFrame(self.main_frame, text="SELECCIONE NAVEGADOR", padding="15 10 15 15")
         browser_frame.pack(fill=tk.X, pady=10)
 
@@ -234,9 +239,8 @@ class MainApp:
         self.cb_24_chan = ttk.Combobox(extra_frame, state="readonly", width=26)
         self.cb_24_chan.grid(row=6, column=1, sticky=tk.W, padx=10)
 
-        # Set opciones iniciales (modelo por defecto 416)
+        # Set opciones iniciales
         self._apply_model_wifi_options(model="DM986-416 AX30")
-
         self._toggle_extra_controls()
 
         # ===== Botón =====
@@ -290,21 +294,47 @@ class MainApp:
     def _apply_model_wifi_options(self, model: str):
         """
         Ajusta las opciones de los combobox según el modelo.
-        - 416: 5GHz width 20/40/80/160 + canales 36..128 (DFS)
-        - 414: 5GHz width 20/40/80 + canales 36/40/44/48 + 149/153/157/161 (Auto DFS)
-              2.4 width 20/40 (sin 20/40MHz) + canales Auto/5..11
+
+        - 416: 5GHz width 20/40/80/160 + canales (DFS + 36..128)
+               2.4 width 20/40/20-40 + canales Auto/5..11
+
+        - 414: (tu modelo anterior)
+               5GHz width 20/40/80 + canales Auto(DFS), 36/40/44/48, 149/153/157/161
+               2.4 width 20/40 + canales Auto/5..11
+
+        - 414 Q: (nuevo firmware igual interfaz AX30)
+               5GHz width 20/40/80 + canales Auto(DFS) + 36..64 + 100..112 + 149..161
+               2.4 width 20/40 + canales Auto + 5..11
         """
         if model == "DM986-414":
-            # 414
+            
             self.cb_5_width.configure(values=["20MHz", "40MHz", "80MHz"])
             self.cb_5_chan.configure(values=["Auto(DFS)", "36", "40", "44", "48", "149", "153", "157", "161"])
 
             self.cb_24_width.configure(values=["20MHz", "40MHz"])
             self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
 
-            # Defaults visibles 414
             self.cb_5_width.set("80MHz")
             self.cb_5_chan.set("Auto(DFS)")
+            self.cb_24_width.set("20MHz")
+            self.cb_24_chan.set("Auto")
+
+        elif model == "DM986-414 Q":
+            
+            self.cb_5_width.configure(values=["20MHz", "40MHz", "80MHz"])
+            self.cb_5_chan.configure(values=[
+                "Auto(DFS)",
+                "36", "40", "44", "48", "52", "56", "60", "64",
+                "100", "104", "108", "112",
+                "149", "153", "157", "161"
+            ])
+
+            self.cb_24_width.configure(values=["20MHz", "40MHz"])
+            self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
+
+            # Defaults visibles 414Q
+            self.cb_5_width.set("80MHz")
+            self.cb_5_chan.set("36")
             self.cb_24_width.set("20MHz")
             self.cb_24_chan.set("Auto")
 
@@ -319,7 +349,6 @@ class MainApp:
             self.cb_24_width.configure(values=["20MHz", "40MHz", "20/40MHz"])
             self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
 
-            # Defaults visibles 416
             self.cb_5_width.set("80MHz")
             self.cb_5_chan.set("DFS")
             self.cb_24_width.set("20MHz")
@@ -342,7 +371,6 @@ class MainApp:
 
         self.root.after(0, _show)
 
-    # ✅ CAMBIO: ahora el browser_choice es texto (combo)
     def get_browser_choice(self) -> str:
         txt = self.browser_choice.get()
         mapping = {
@@ -364,9 +392,9 @@ class MainApp:
 
     def get_extra_wifi_config(self) -> dict:
         """
-        IMPORTANTE: Este formato es el que esperan logic_416 y logic_414:
+        Formato esperado por lógica:
           enabled, chanwid_5, chan_5, chanwid_24, chan_24
-        Los valores devueltos son los 'value' reales para Select().select_by_value(...)
+        Valores devueltos = 'value' del HTML (Select().select_by_value)
         """
         enabled = self.use_custom_wlan.get()
         model = self.modelo.get()
@@ -375,15 +403,12 @@ class MainApp:
             return {"enabled": False}
 
         if model == "DM986-414":
-            # 414: width 20/40/80 (0/1/2), chan Auto(DFS)=0, 36/40/44/48/149/153/157/161
             map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2"}
             map_5c = {
                 "Auto(DFS)": "0",
                 "36": "36", "40": "40", "44": "44", "48": "48",
                 "149": "149", "153": "153", "157": "157", "161": "161"
             }
-
-            # 414: 2.4 width 20/40 (0/1) ; chan Auto=0; 5..11
             map_24w = {"20MHz": "0", "40MHz": "1"}
             map_24c = {"Auto": "0", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11"}
 
@@ -395,7 +420,29 @@ class MainApp:
                 "chan_24": map_24c.get(self.cb_24_chan.get(), "0"),
             }
 
-        # 416: width 20/40/80/160 (0/1/2/3), chan DFS=0, + 36..128
+        if model == "DM986-414 Q":
+            # ✅ 414Q según tu HTML:
+            # chanwid: 0/1/2 ; chan: 0 Auto(DFS) o canal 36..161
+            map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2"}
+            map_5c = {
+                "Auto(DFS)": "0",
+                "36": "36", "40": "40", "44": "44", "48": "48",
+                "52": "52", "56": "56", "60": "60", "64": "64",
+                "100": "100", "104": "104", "108": "108", "112": "112",
+                "149": "149", "153": "153", "157": "157", "161": "161"
+            }
+            map_24w = {"20MHz": "0", "40MHz": "1"}
+            map_24c = {"Auto": "0", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11"}
+
+            return {
+                "enabled": True,
+                "chanwid_5": map_5w.get(self.cb_5_width.get(), "2"),
+                "chan_5": map_5c.get(self.cb_5_chan.get(), "36"),
+                "chanwid_24": map_24w.get(self.cb_24_width.get(), "0"),
+                "chan_24": map_24c.get(self.cb_24_chan.get(), "0"),
+            }
+
+        # 416
         map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2", "160MHz": "3"}
         map_5c = {
             "DFS": "0",
@@ -468,6 +515,12 @@ class MainApp:
                 if ConfiguradorModem416 is None:
                     raise Exception("No se pudo importar logic_416.py (ConfiguradorModem416).")
                 logic = ConfiguradorModem416(self)
+
+            elif model == "DM986-414 Q":
+                if ConfiguradorModem414Q is None:
+                    raise Exception("No se pudo importar logic_414Q.py (ConfiguradorModem414Q).")
+                logic = ConfiguradorModem414Q(self)
+
             else:
                 logic = ConfiguradorModem414(self)
 
