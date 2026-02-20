@@ -154,11 +154,10 @@ class ConfiguradorModem414:
             traceback.print_exc()
 
         finally:
-            try:
-                if self.driver:
-                    self.driver.quit()
-            except Exception:
-                pass
+            # NO cerrar el navegador (modo debug)
+            self._status("Navegador queda abierto (modo debug).")
+            # no hacemos driver.quit()
+            pass
 
     # =========================
     # Extras WLAN: defaults + validación

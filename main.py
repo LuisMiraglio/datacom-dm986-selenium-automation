@@ -107,9 +107,6 @@ class MainApp:
         self.wpa_password = tk.StringVar()
         self.new_password = tk.StringVar()
 
-        # Extras WLAN
-        self.use_custom_wlan = tk.BooleanVar(value=False)
-
         # Fuentes
         self.title_font = font.Font(family="Segoe UI", size=16, weight="bold")
         self.header_font = font.Font(family="Segoe UI", size=12, weight="bold")
@@ -206,43 +203,6 @@ class MainApp:
             else:
                 ttk.Entry(config_frame, textvariable=v, width=30).grid(row=i, column=1, sticky=tk.W, padx=10)
 
-        # ===== Extras WLAN =====
-        extra_frame = ttk.LabelFrame(self.main_frame, text="CONFIGURACIONES ADICIONALES (WLAN)", padding="15 10 15 15")
-        extra_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Checkbutton(
-            extra_frame,
-            text="Aplicar configuraciones personalizadas (Channel Width / Channel Number)",
-            variable=self.use_custom_wlan,
-            command=self._toggle_extra_controls
-        ).grid(row=0, column=0, columnspan=4, sticky=tk.W, pady=(0, 10))
-
-        ttk.Label(extra_frame, text="WLAN 5GHz:", font=self.header_font) \
-            .grid(row=1, column=0, sticky=tk.W, pady=(0, 6))
-
-        ttk.Label(extra_frame, text="Channel Width:").grid(row=2, column=0, sticky=tk.W, pady=4)
-        self.cb_5_width = ttk.Combobox(extra_frame, state="readonly", width=26)
-        self.cb_5_width.grid(row=2, column=1, sticky=tk.W, padx=10)
-
-        ttk.Label(extra_frame, text="Channel Number:").grid(row=3, column=0, sticky=tk.W, pady=4)
-        self.cb_5_chan = ttk.Combobox(extra_frame, state="readonly", width=26)
-        self.cb_5_chan.grid(row=3, column=1, sticky=tk.W, padx=10)
-
-        ttk.Label(extra_frame, text="WLAN 2.4GHz:", font=self.header_font) \
-            .grid(row=4, column=0, sticky=tk.W, pady=(12, 6))
-
-        ttk.Label(extra_frame, text="Channel Width:").grid(row=5, column=0, sticky=tk.W, pady=4)
-        self.cb_24_width = ttk.Combobox(extra_frame, state="readonly", width=26)
-        self.cb_24_width.grid(row=5, column=1, sticky=tk.W, padx=10)
-
-        ttk.Label(extra_frame, text="Channel Number:").grid(row=6, column=0, sticky=tk.W, pady=4)
-        self.cb_24_chan = ttk.Combobox(extra_frame, state="readonly", width=26)
-        self.cb_24_chan.grid(row=6, column=1, sticky=tk.W, padx=10)
-
-        # Set opciones iniciales
-        self._apply_model_wifi_options(model="DM986-416 AX30")
-        self._toggle_extra_controls()
-
         # ===== Botón =====
         button_section = tk.Frame(self.main_frame, bg="#E3F2FD")
         button_section.pack(fill=tk.X, pady=(10, 5))
@@ -285,74 +245,11 @@ class MainApp:
             .pack(side=tk.RIGHT, padx=10)
 
     # =========================
-    # Cambios por modelo (opciones de combos)
+    # Cambios por modelo
     # =========================
     def _on_model_change(self, _event=None):
-        self._apply_model_wifi_options(model=self.modelo.get())
-        self._toggle_extra_controls()
-
-    def _apply_model_wifi_options(self, model: str):
-        """
-        Ajusta las opciones de los combobox según el modelo.
-
-        - 416: 5GHz width 20/40/80/160 + canales (DFS + 36..128)
-               2.4 width 20/40/20-40 + canales Auto/5..11
-
-        - 414: (tu modelo anterior)
-               5GHz width 20/40/80 + canales Auto(DFS), 36/40/44/48, 149/153/157/161
-               2.4 width 20/40 + canales Auto/5..11
-
-        - 414 Q: (nuevo firmware igual interfaz AX30)
-               5GHz width 20/40/80 + canales Auto(DFS) + 36..64 + 100..112 + 149..161
-               2.4 width 20/40 + canales Auto + 5..11
-        """
-        if model == "DM986-414":
-            
-            self.cb_5_width.configure(values=["20MHz", "40MHz", "80MHz"])
-            self.cb_5_chan.configure(values=["Auto(DFS)", "36", "40", "44", "48", "149", "153", "157", "161"])
-
-            self.cb_24_width.configure(values=["20MHz", "40MHz"])
-            self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
-
-            self.cb_5_width.set("80MHz")
-            self.cb_5_chan.set("Auto(DFS)")
-            self.cb_24_width.set("20MHz")
-            self.cb_24_chan.set("Auto")
-
-        elif model == "DM986-414 Q":
-            
-            self.cb_5_width.configure(values=["20MHz", "40MHz", "80MHz"])
-            self.cb_5_chan.configure(values=[
-                "Auto(DFS)",
-                "36", "40", "44", "48", "52", "56", "60", "64",
-                "100", "104", "108", "112",
-                "149", "153", "157", "161"
-            ])
-
-            self.cb_24_width.configure(values=["20MHz", "40MHz"])
-            self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
-
-            # Defaults visibles 414Q
-            self.cb_5_width.set("80MHz")
-            self.cb_5_chan.set("36")
-            self.cb_24_width.set("20MHz")
-            self.cb_24_chan.set("Auto")
-
-        else:
-            # 416
-            self.cb_5_width.configure(values=["20MHz", "40MHz", "80MHz", "160MHz"])
-            self.cb_5_chan.configure(values=[
-                "DFS", "36", "40", "44", "48", "52", "56", "60", "64",
-                "100", "104", "108", "112", "116", "120", "124", "128"
-            ])
-
-            self.cb_24_width.configure(values=["20MHz", "40MHz", "20/40MHz"])
-            self.cb_24_chan.configure(values=["Auto", "5", "6", "7", "8", "9", "10", "11"])
-
-            self.cb_5_width.set("80MHz")
-            self.cb_5_chan.set("DFS")
-            self.cb_24_width.set("20MHz")
-            self.cb_24_chan.set("Auto")
+        # Ya no hay opciones WLAN en la UI, así que acá no hacemos nada extra.
+        pass
 
     # =========================
     # UI Adapter Methods (para logic_*.py)
@@ -391,88 +288,14 @@ class MainApp:
         }
 
     def get_extra_wifi_config(self) -> dict:
-        """
-        Formato esperado por lógica:
-          enabled, chanwid_5, chan_5, chanwid_24, chan_24
-        Valores devueltos = 'value' del HTML (Select().select_by_value)
-        """
-        enabled = self.use_custom_wlan.get()
-        model = self.modelo.get()
-
-        if not enabled:
-            return {"enabled": False}
-
-        if model == "DM986-414":
-            map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2"}
-            map_5c = {
-                "Auto(DFS)": "0",
-                "36": "36", "40": "40", "44": "44", "48": "48",
-                "149": "149", "153": "153", "157": "157", "161": "161"
-            }
-            map_24w = {"20MHz": "0", "40MHz": "1"}
-            map_24c = {"Auto": "0", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11"}
-
-            return {
-                "enabled": True,
-                "chanwid_5": map_5w.get(self.cb_5_width.get(), "2"),
-                "chan_5": map_5c.get(self.cb_5_chan.get(), "0"),
-                "chanwid_24": map_24w.get(self.cb_24_width.get(), "0"),
-                "chan_24": map_24c.get(self.cb_24_chan.get(), "0"),
-            }
-
-        if model == "DM986-414 Q":
-            # ✅ 414Q según tu HTML:
-            # chanwid: 0/1/2 ; chan: 0 Auto(DFS) o canal 36..161
-            map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2"}
-            map_5c = {
-                "Auto(DFS)": "0",
-                "36": "36", "40": "40", "44": "44", "48": "48",
-                "52": "52", "56": "56", "60": "60", "64": "64",
-                "100": "100", "104": "104", "108": "108", "112": "112",
-                "149": "149", "153": "153", "157": "157", "161": "161"
-            }
-            map_24w = {"20MHz": "0", "40MHz": "1"}
-            map_24c = {"Auto": "0", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11"}
-
-            return {
-                "enabled": True,
-                "chanwid_5": map_5w.get(self.cb_5_width.get(), "2"),
-                "chan_5": map_5c.get(self.cb_5_chan.get(), "36"),
-                "chanwid_24": map_24w.get(self.cb_24_width.get(), "0"),
-                "chan_24": map_24c.get(self.cb_24_chan.get(), "0"),
-            }
-
-        # 416
-        map_5w = {"20MHz": "0", "40MHz": "1", "80MHz": "2", "160MHz": "3"}
-        map_5c = {
-            "DFS": "0",
-            "36": "36", "40": "40", "44": "44", "48": "48",
-            "52": "52", "56": "56", "60": "60", "64": "64",
-            "100": "100", "104": "104", "108": "108", "112": "112",
-            "116": "116", "120": "120", "124": "124", "128": "128"
-        }
-
-        map_24w = {"20MHz": "0", "40MHz": "1", "20/40MHz": "3"}
-        map_24c = {"Auto": "0", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11"}
-
-        return {
-            "enabled": True,
-            "chanwid_5": map_5w.get(self.cb_5_width.get(), "2"),
-            "chan_5": map_5c.get(self.cb_5_chan.get(), "0"),
-            "chanwid_24": map_24w.get(self.cb_24_width.get(), "0"),
-            "chan_24": map_24c.get(self.cb_24_chan.get(), "0"),
-        }
+        # Ya no existe configuración manual de canales desde la UI.
+        return {"enabled": False}
 
     # =========================
     # UI Helpers
     # =========================
     def _toggle_password(self, entry, show_var):
         entry.configure(show="" if show_var.get() else "*")
-
-    def _toggle_extra_controls(self):
-        state = "readonly" if self.use_custom_wlan.get() else "disabled"
-        for cb in (self.cb_5_width, self.cb_5_chan, self.cb_24_width, self.cb_24_chan):
-            cb.configure(state=state)
 
     def _validate_required(self) -> bool:
         creds = self.get_credentials()

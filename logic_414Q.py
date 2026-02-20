@@ -1,4 +1,4 @@
-# logica para configurar Datacom DM986-416 Q via Selenium
+# logica para configurar Datacom DM986-414 Q via Selenium
 import time
 import base64
 import traceback
@@ -20,7 +20,6 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 
 class ConfiguradorModem414Q:
-
     def __init__(self, ui):
         self.ui = ui
         self.driver = None
@@ -35,7 +34,6 @@ class ConfiguradorModem414Q:
             print(msg)
 
     def _msgbox_error(self, title: str, text: str):
-        # si tu UI tiene safe_messagebox, la usamos; si no, solo status/print
         fn = getattr(self.ui, "safe_messagebox", None)
         if callable(fn):
             fn(title, text, kind="error")
@@ -104,14 +102,14 @@ class ConfiguradorModem414Q:
     def _switch_to_content_iframe(self, timeout=15):
         d = self.driver
         d.switch_to.default_content()
-        WebDriverWait(d, timeout).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "contentIframe")))
+        WebDriverWait(d, timeout).until(
+            EC.frame_to_be_available_and_switch_to_it((By.ID, "contentIframe"))
+        )
 
     def _select_value_by_name(self, name: str, value: str, timeout=15):
-        el = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.NAME, name)))
-        Select(el).select_by_value(str(value))
-
-    def _select_value_by_id(self, el_id: str, value: str, timeout=15):
-        el = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.ID, el_id)))
+        el = WebDriverWait(self.driver, timeout).until(
+            EC.presence_of_element_located((By.NAME, name))
+        )
         Select(el).select_by_value(str(value))
 
     # =========================
@@ -121,7 +119,6 @@ class ConfiguradorModem414Q:
         try:
             browser = self.ui.get_browser_choice()
             creds = self.ui.get_credentials()
-            extras = self._normalize_extras(self.ui.get_extra_wifi_config())
 
             self._status("Iniciando navegador...")
             if browser == "auto":
@@ -130,11 +127,11 @@ class ConfiguradorModem414Q:
                 self.driver = self.iniciar_navegador(browser)
 
             self._status("Navegador inicializado.")
-            self.configurar_modem(creds, extras)
-            self._status("✅ Configuración DM986-416 Q completada.")
+            self.configurar_modem(creds)
+            self._status("✅ Configuración DM986-414 Q completada.")
 
         except Exception as e:
-            self._msgbox_error("Error durante la configuración (416 Q)", str(e))
+            self._msgbox_error("Error durante la configuración (414 Q)", str(e))
             traceback.print_exc()
 
         finally:
@@ -143,41 +140,12 @@ class ConfiguradorModem414Q:
             # no hacemos driver.quit()
             pass
 
-
-    # =========================
-    # Extras WLAN (defaults + validación)
-    # =========================
-    def _normalize_extras(self, extras: dict) -> dict:
-
-        if not isinstance(extras, dict):
-            extras = {}
-
-        enabled = bool(extras.get("enabled", False))
-
-        # Defaults firmwares 416 Q (según tu HTML)
-        out = {
-            "enabled": enabled,
-            "chanwid_5": extras.get("chanwid_5", "2"),
-            "chan_5": extras.get("chan_5", "0"),
-            "chanwid_24": extras.get("chanwid_24", "0"),
-            "chan_24": extras.get("chan_24", "0"),
-        }
-
-        # Si no está habilitado, forzamos defaults (para que quede estable)
-        if not enabled:
-            out["chanwid_5"] = "2"
-            out["chan_5"] = "0"
-            out["chanwid_24"] = "0"
-            out["chan_24"] = "0"
-
-        return out
-
     # =========================
     # Lógica del módem (TU FLUJO)
     # =========================
-    def configurar_modem(self, creds: dict, extra: dict):
+    def configurar_modem(self, creds: dict):
         d = self.driver
-        wait = WebDriverWait(d, 20)
+        WebDriverWait(d, 20)
 
         username = creds["username"]
         password = creds["password"]
@@ -188,14 +156,16 @@ class ConfiguradorModem414Q:
         # =========================
         # LOGIN (414 Q)
         # =========================
-        self._status("Accediendo a login del modem (416)...")
+        self._status("Accediendo a login del modem (414 Q)...")
         d.get("https://192.168.0.1/admin/login.asp")
         time.sleep(2)
 
         self._switch_to_first_iframe_if_present()
 
         self._status("Completando credenciales...")
-        user_field = WebDriverWait(d, 10).until(EC.presence_of_element_located((By.NAME, "username")))
+        user_field = WebDriverWait(d, 10).until(
+            EC.presence_of_element_located((By.NAME, "username"))
+        )
         user_field.clear()
         user_field.send_keys(username)
 
@@ -203,7 +173,6 @@ class ConfiguradorModem414Q:
         pass_field.clear()
         pass_field.send_keys(password)
 
-        # EncodePassword (como tu script original)
         encoded_password = base64.b64encode(password.encode("utf-8")).decode("utf-8")
         d.execute_script(
             """
@@ -240,7 +209,6 @@ class ConfiguradorModem414Q:
         vid_input.send_keys("500")
         time.sleep(1)
 
-        # adslConnectionMode = 1
         adsl_sel = WebDriverWait(d, 10).until(EC.presence_of_element_located((By.NAME, "adslConnectionMode")))
         for opt in adsl_sel.find_elements(By.TAG_NAME, "option"):
             if opt.get_attribute("value") == "1":
@@ -248,10 +216,6 @@ class ConfiguradorModem414Q:
                 break
         time.sleep(1)
 
-        # =========================
-        # (FIX) VLAN 500: ctype = 2 (Internet) + ipMode = 1 (DHCP)
-        # =========================
-        # ctype = 2 (Internet)
         ctype_sel_500 = WebDriverWait(d, 10).until(EC.presence_of_element_located((By.NAME, "ctype")))
         found_ctype2 = False
         for opt in ctype_sel_500.find_elements(By.TAG_NAME, "option"):
@@ -263,14 +227,15 @@ class ConfiguradorModem414Q:
             raise Exception("No se encontró la opción ctype=2 (Internet) en VLAN 500.")
         time.sleep(1)
 
-        # ipMode = 1 (DHCP)
         dhcp_500 = WebDriverWait(d, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@type='radio' and @name='ipMode' and @value='1']"))
         )
         self._click_safe(dhcp_500)
         time.sleep(1)
 
-        chkpt_all = WebDriverWait(d, 10).until(EC.element_to_be_clickable((By.XPATH, "//input[@name='chkpt_all']")))
+        chkpt_all = WebDriverWait(d, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@name='chkpt_all']"))
+        )
         self._click_safe(chkpt_all)
         time.sleep(1)
 
@@ -323,7 +288,6 @@ class ConfiguradorModem414Q:
                 break
         time.sleep(1)
 
-        # ctype = 1 (TR069)
         ctype_sel = WebDriverWait(d, 10).until(EC.presence_of_element_located((By.NAME, "ctype")))
         for opt in ctype_sel.find_elements(By.TAG_NAME, "option"):
             if opt.get_attribute("value") == "1":
@@ -338,7 +302,6 @@ class ConfiguradorModem414Q:
         time.sleep(1)
 
         chkpt_all_2 = WebDriverWait(d, 10).until(EC.element_to_be_clickable((By.NAME, "chkpt_all")))
-        # Tu “doble click” para estabilizar
         self._click_safe(chkpt_all_2)
         time.sleep(1)
         try:
@@ -354,57 +317,42 @@ class ConfiguradorModem414Q:
         time.sleep(3)
 
         # =========================
-        # WLAN 5GHz (414Q)
+        # WLAN 5GHz (414Q) - HARDCODE
         # =========================
         d.switch_to.default_content()
 
         self._status("Abriendo WLAN (5GHz)...")
         nav_menu = WebDriverWait(d, 20).until(EC.presence_of_element_located((By.ID, "nav")))
 
-        # Click en WLAN
         wlan_link = WebDriverWait(nav_menu, 20).until(
             EC.element_to_be_clickable((By.XPATH, ".//a[@rel='3' and normalize-space()='WLAN']"))
         )
         self._click_safe(wlan_link)
 
-        # Entrar al iframe del contenido (donde están los selects)
         self._switch_to_content_iframe(timeout=20)
 
-        # Esperar que exista el SSID (señal de que estás en la página WLAN 5GHz)
         ssid_input = WebDriverWait(d, 20).until(EC.presence_of_element_located((By.NAME, "ssid")))
         ssid_input.clear()
         ssid_input.send_keys(ssid_name)
         time.sleep(2)
 
-        # =========================
-        # Channel Width / Channel Number (414Q)
-        # =========================
         self._status("Aplicando Channel Width / Channel Number (5GHz)...")
-
-        # Width 80MHz
         chanwid_el = WebDriverWait(d, 20).until(EC.presence_of_element_located((By.NAME, "chanwid")))
         Select(chanwid_el).select_by_value("2")  # 80MHz
-        WebDriverWait(d, 10).until(lambda _d: Select(_d.find_element(By.NAME, "chanwid")).first_selected_option.get_attribute("value") == "2")
 
-        # Channel 36
         chan_el = WebDriverWait(d, 20).until(EC.presence_of_element_located((By.NAME, "chan")))
         Select(chan_el).select_by_value("36")
-        WebDriverWait(d, 10).until(lambda _d: Select(_d.find_element(By.NAME, "chan")).first_selected_option.get_attribute("value") == "36")
 
-        # TX Power (si existe en esa pantalla)
         try:
             self._select_value_by_name("txpower", "0", timeout=10)
         except Exception:
             pass
 
-        # Apply Changes WLAN
         apply_btn = WebDriverWait(d, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='save' and @value='Apply Changes']"))
         )
         self._click_safe(apply_btn)
         time.sleep(3)
-
-
 
         # =========================
         # Seguridad 5GHz
@@ -421,17 +369,14 @@ class ConfiguradorModem414Q:
 
         self._switch_to_content_iframe(timeout=15)
 
-        # --- Encryption: WPA2 Mixed (value="6") ---
         sec_method = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "security_method")))
         Select(sec_method).select_by_value("6")  # WPA2 Mixed
-        # dispara el onchange show_authentication()
         try:
             d.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles:true}));", sec_method)
         except Exception:
             pass
         time.sleep(1)
 
-        # --- WPA-PSK ---
         psk_5 = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "wpapsk")))
         psk_5.clear()
         psk_5.send_keys(wpa_password)
@@ -444,7 +389,7 @@ class ConfiguradorModem414Q:
         time.sleep(3)
 
         # =========================
-        # WLAN 2.4GHz
+        # WLAN 2.4GHz - HARDCODE
         # =========================
         d.switch_to.default_content()
         self._status("Configurando WiFi 2.4GHz...")
@@ -464,8 +409,8 @@ class ConfiguradorModem414Q:
         time.sleep(1)
 
         self._status("Aplicando Channel Width / Channel Number (2.4GHz)...")
-        self._select_value_by_name("chanwid", extra["chanwid_24"], timeout=10)
-        self._select_value_by_name("chan", extra["chan_24"], timeout=10)
+        self._select_value_by_name("chanwid", "0", timeout=10)  # 20MHz
+        self._select_value_by_name("chan", "0", timeout=10)     # Auto
         time.sleep(1)
 
         self._select_value_by_name("txpower", "0", timeout=10)
@@ -492,24 +437,14 @@ class ConfiguradorModem414Q:
 
         self._switch_to_content_iframe(timeout=15)
 
-        # --- Encryption: WPA2 Mixed (value="6") ---
-        sec_method_24 = WebDriverWait(d, 15).until(
-            EC.presence_of_element_located((By.ID, "security_method"))
-        )
+        sec_method_24 = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "security_method")))
         Select(sec_method_24).select_by_value("6")  # WPA2 Mixed
-
-        # fuerza el onchange show_authentication()
         try:
-            d.execute_script(
-                "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
-                sec_method_24
-            )
+            d.execute_script("arguments[0].dispatchEvent(new Event('change', {bubbles:true}));", sec_method_24)
         except Exception:
             pass
-
         time.sleep(1)
 
-        # --- WPA-PSK ---
         psk_24 = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "wpapsk")))
         psk_24.clear()
         psk_24.send_keys(wpa_password)
@@ -520,7 +455,6 @@ class ConfiguradorModem414Q:
         )
         self._click_safe(apply_sec24)
         time.sleep(3)
-
 
         # =========================
         # Admin -> Password
@@ -564,7 +498,6 @@ class ConfiguradorModem414Q:
         d.switch_to.default_content()
         self._status("Configurando TR-069...")
 
-        # asegurar Admin tab
         admin_tab2 = WebDriverWait(d, 15).until(
             EC.element_to_be_clickable((By.XPATH, "//ul[@id='nav']//a[@href='javascript:void(0)' and @rel='9' and normalize-space()='Admin']"))
         )
@@ -653,96 +586,60 @@ class ConfiguradorModem414Q:
         self._click_safe(apply_remote)
 
         self._status("Listo. El modem debería quedar configurado.")
-        
+
         # =========================
         # Admin -> OMCI Information (DESPUÉS de Remote Access)
         # =========================
-        try:
-            d.switch_to.default_content()
-            self._status("Abriendo Admin -> OMCI Information...")
+        d.switch_to.default_content()
+        self._status("Abriendo Admin -> OMCI Information...")
 
-            # Click en Admin (menu superior)
-            nav_menu = WebDriverWait(d, 15).until(
-                EC.presence_of_element_located((By.ID, "nav"))
-            )
-            admin_tab3 = WebDriverWait(nav_menu, 15).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, ".//a[@href='javascript:void(0)' and @rel='9' and normalize-space()='Admin']")
-                )
-            )
-            self._click_safe(admin_tab3)
-            time.sleep(2)
+        nav_menu = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "nav")))
+        admin_tab3 = WebDriverWait(nav_menu, 15).until(
+            EC.element_to_be_clickable((By.XPATH, ".//a[@href='javascript:void(0)' and @rel='9' and normalize-space()='Admin']"))
+        )
+        self._click_safe(admin_tab3)
+        time.sleep(2)
 
-            # Click en OMCI Information (side menu)
-            side_menu = WebDriverWait(d, 15).until(
-                EC.presence_of_element_located((By.ID, "side"))
-            )
-            omci_link = WebDriverWait(side_menu, 15).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, ".//a[@target='contentIframe' and @href='omci_info.asp' and normalize-space()='OMCI Information']")
-                )
-            )
-            self._click_safe(omci_link)
-            time.sleep(2)
+        side_menu = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "side")))
+        omci_link = WebDriverWait(side_menu, 15).until(
+            EC.element_to_be_clickable((By.XPATH, ".//a[@target='contentIframe' and @href='omci_info.asp' and normalize-space()='OMCI Information']"))
+        )
+        self._click_safe(omci_link)
+        time.sleep(2)
 
-            # Entrar al iframe de contenido
-            self._switch_to_content_iframe(timeout=15)
-            time.sleep(2)
+        self._switch_to_content_iframe(timeout=15)
+        time.sleep(2)
 
-            # =========================
-            # OMCI Information -> Vendor ID
-            # =========================
-            self._status("Configurando OMCI Vendor ID...")
+        self._status("Configurando OMCI Vendor ID...")
+        omci_vendor = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.NAME, "omci_vendor_id")))
+        omci_vendor.clear()
+        omci_vendor.send_keys("ZNTS")
+        time.sleep(2)
 
-            omci_vendor = WebDriverWait(d, 15).until(
-                EC.presence_of_element_located((By.NAME, "omci_vendor_id"))
-            )
-            omci_vendor.clear()
-            omci_vendor.send_keys("ZNTS")
-            time.sleep(2)
+        apply_omci = WebDriverWait(d, 15).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='apply' and @value='Apply Changes']"))
+        )
+        self._click_safe(apply_omci)
+        time.sleep(1)
 
-            # Click Apply Changes (UNA SOLA VEZ)
-            apply_omci = WebDriverWait(d, 15).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//input[@type='submit' and @name='apply' and @value='Apply Changes']")
-                )
-            )
-            self._click_safe(apply_omci)
-            time.sleep(1)
+        for _ in range(2):
+            try:
+                WebDriverWait(d, 4).until(EC.alert_is_present())
+                d.switch_to.alert.accept()
+                time.sleep(0.5)
+            except Exception:
+                break
 
-            # Aceptar hasta 2 alertas si aparecen (apply / commit)
-            for _ in range(2):
-                try:
-                    WebDriverWait(d, 4).until(EC.alert_is_present())
-                    d.switch_to.alert.accept()
-                    time.sleep(0.5)
-                except Exception:
-                    break
+        self._status("Reinicio detectado. Esperando a que el equipo vuelva (hasta 2 min)...")
 
-            # =========================
-            # Espera por reinicio del equipo
-            # =========================
-            self._status("Reinicio detectado. Esperando a que el equipo vuelva (hasta 2 min)...")
-
-            t_end = time.time() + 120
-            while time.time() < t_end:
-                try:
-                    d.get("https://192.168.0.1/admin/login.asp")
-                    WebDriverWait(d, 5).until(
-                        EC.presence_of_element_located((By.NAME, "username"))
-                    )
-                    self._status("✅ El equipo volvió (login visible).")
-                    break
-                except Exception:
-                    time.sleep(5)
-            else:
-                self._status("⚠️ Pasaron 2 minutos y no volvió el login todavía.")
-
-        finally:
-            # NO cerrar el navegador (modo debug)
-            self._status("Navegador queda abierto (modo debug).")
-            # no hacemos driver.quit()
-
-
-
-
+        t_end = time.time() + 120
+        while time.time() < t_end:
+            try:
+                d.get("https://192.168.0.1/admin/login.asp")
+                WebDriverWait(d, 5).until(EC.presence_of_element_located((By.NAME, "username")))
+                self._status("✅ El equipo volvió (login visible).")
+                break
+            except Exception:
+                time.sleep(5)
+        else:
+            self._status("⚠️ Pasaron 2 minutos y no volvió el login todavía.")
