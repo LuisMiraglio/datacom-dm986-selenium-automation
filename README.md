@@ -16,7 +16,7 @@ El objetivo principal es **eliminar la configuración manual**, reducir errores 
 
 ## 🖥️ Interfaz de la aplicación
 
-![Interfaz principal del Configurador Datacom DM986](docs/images/app_interface.png)
+![Interfaz principal del Configurador Datacom DM986](docs/images/app_interface.PNG)
 
 ---
 
