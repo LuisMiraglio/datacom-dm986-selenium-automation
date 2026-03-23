@@ -6,6 +6,7 @@ El **Configurador Automático Datacom DM986** es una herramienta profesional des
 
 - **DM986-416 AX30**
 - **DM986-414**
+- **DM986-414**
 
 La aplicación utiliza **Selenium** para interactuar directamente con la interfaz web del módem y una **interfaz gráfica en Tkinter** que permite ejecutar todo el proceso de configuración de forma simple, segura y repetible.
 
