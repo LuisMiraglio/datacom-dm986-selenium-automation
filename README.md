@@ -121,15 +121,7 @@ python main.py
 ## 🛠️ Compilación (PyInstaller)
 
 ```bash
-pyinstaller --onefile --noconsole ^
---icon=assets/icono.ico ^
---add-data "assets/icono.ico;assets" ^
---hidden-import=webdriver_manager.chrome ^
---hidden-import=webdriver_manager.microsoft ^
---hidden-import=webdriver_manager.firefox ^
---hidden-import=tkinter ^
---name "Configurador Datacom DM986 (Unified)" ^
-main.py
+python -m PyInstaller --onefile --noconsole --icon=assets/icons/icono.ico --hidden-import=webdriver_manager.chrome --hidden-import=webdriver_manager.microsoft --hidden-import=webdriver_manager.firefox --hidden-import=tkinter --name "Configurador Datacom" main.py
 ```
 
 ---
