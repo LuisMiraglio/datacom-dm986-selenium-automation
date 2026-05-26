@@ -13,33 +13,10 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException
 
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
-
-
-# ============================================================
-# INICIO BLOQUE AGREGADO - MANEJO DE ERRORES AMIGABLES
-# ============================================================
-class ErrorConexionEquipo(Exception):
-    pass
-
-
-class ErrorCredencialesEquipo(Exception):
-    pass
-
-
-class ErrorConfiguracionAmigable(Exception):
-    pass
-
-
-class ErrorInternetODriver(Exception):
-    pass
-# ============================================================
-# FIN BLOQUE AGREGADO - MANEJO DE ERRORES AMIGABLES
-# ============================================================
 
 
 class ConfiguradorModem414:
@@ -81,138 +58,41 @@ class ConfiguradorModem414:
         else:
             self._status(f"{title}: {text}")
 
-    # ============================================================
-    # INICIO BLOQUE AGREGADO - HELPERS DE ERRORES
-    # ============================================================
-    def _guardar_error_tecnico(self):
-        try:
-            with open("error_log.txt", "a", encoding="utf-8") as f:
-                f.write("\n" + "=" * 80 + "\n")
-                f.write(traceback.format_exc())
-                f.write("\n")
-        except Exception:
-            pass
-
-    def _abrir_login_seguro(self, url: str):
-        try:
-            self.driver.get(url)
-        except WebDriverException as e:
-            texto = str(e).upper()
-            if (
-                "ERR_CONNECTION_TIMED_OUT" in texto
-                or "ERR_CONNECTION_REFUSED" in texto
-                or "ERR_ADDRESS_UNREACHABLE" in texto
-                or "ERR_NAME_NOT_RESOLVED" in texto
-                or "ERR_INTERNET_DISCONNECTED" in texto
-            ):
-                raise ErrorConexionEquipo(
-                    "No se pudo acceder al equipo.\n\n"
-                    "Verificá que la PC esté conectada a la red Wi-Fi o LAN correcta del dispositivo "
-                    "y que la IP 192.168.0.1 sea accesible."
-                ) from e
-            raise
-
-    def _verificar_login_exitoso_414(self, timeout=15):
-        d = self.driver
-        try:
-            return WebDriverWait(d, timeout).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@rel='4' and normalize-space()='WAN']"))
-            )
-        except TimeoutException as e:
-            try:
-                d.switch_to.default_content()
-            except Exception:
-                pass
-
-            try:
-                user_fields = d.find_elements(By.NAME, "username")
-                pass_fields = d.find_elements(By.NAME, "password")
-
-                if user_fields and pass_fields:
-                    raise ErrorCredencialesEquipo(
-                        "No se pudo iniciar sesión en el equipo.\n\n"
-                        "Revisá que la contraseña ingresada sea correcta."
-                    ) from e
-            except ErrorCredencialesEquipo:
-                raise
-            except Exception:
-                pass
-
-            raise ErrorConfiguracionAmigable(
-                "No se pudo cargar correctamente la interfaz del equipo después del login.\n\n"
-                "Verificá la conexión con el dispositivo e intentá nuevamente."
-            ) from e
-    # ============================================================
-    # FIN BLOQUE AGREGADO - HELPERS DE ERRORES
-    # ============================================================
-
     # =========================
     # Driver
     # =========================
     def iniciar_navegador(self, navegador: str):
-        try:
-            if navegador == "chrome":
-                options = ChromeOptions()
-                options.add_argument("--ignore-certificate-errors")
-                options.add_argument("--ignore-ssl-errors")
-                options.add_argument("--disable-web-security")
-                options.add_argument("--allow-running-insecure-content")
-                return webdriver.Chrome(
-                    service=ChromeService(ChromeDriverManager().install()),
-                    options=options
-                )
+        if navegador == "chrome":
+            options = ChromeOptions()
+            options.add_argument("--ignore-certificate-errors")
+            options.add_argument("--ignore-ssl-errors")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--allow-running-insecure-content")
+            return webdriver.Chrome(
+                service=ChromeService(ChromeDriverManager().install()),
+                options=options
+            )
 
-            if navegador == "edge":
-                options = EdgeOptions()
-                options.add_argument("--ignore-certificate-errors")
-                options.add_argument("--ignore-ssl-errors")
-                options.add_argument("--disable-web-security")
-                options.add_argument("--allow-running-insecure-content")
-                return webdriver.Edge(
-                    service=EdgeService(EdgeChromiumDriverManager().install()),
-                    options=options
-                )
+        if navegador == "edge":
+            options = EdgeOptions()
+            options.add_argument("--ignore-certificate-errors")
+            options.add_argument("--ignore-ssl-errors")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--allow-running-insecure-content")
+            return webdriver.Edge(
+                service=EdgeService(EdgeChromiumDriverManager().install()),
+                options=options
+            )
 
-            if navegador == "firefox":
-                options = FirefoxOptions()
-                options.accept_insecure_certs = True
-                return webdriver.Firefox(
-                    service=FirefoxService(GeckoDriverManager().install()),
-                    options=options
-                )
+        if navegador == "firefox":
+            options = FirefoxOptions()
+            options.accept_insecure_certs = True
+            return webdriver.Firefox(
+                service=FirefoxService(GeckoDriverManager().install()),
+                options=options
+            )
 
-            raise ValueError(f"Navegador inválido: {navegador}")
-
-        except Exception as e:
-            texto = str(e).lower()
-
-            indicadores_internet_driver = [
-                "connection",
-                "connect",
-                "internet",
-                "network",
-                "name resolution",
-                "name or service not known",
-                "could not reach host",
-                "failed to establish a new connection",
-                "max retries exceeded",
-                "get_lan_ip",
-                "ssl",
-                "certificate",
-                "webdriver_manager",
-                "requests",
-                "urlopen error",
-                "timed out",
-            ]
-
-            if any(ind in texto for ind in indicadores_internet_driver):
-                raise ErrorInternetODriver(
-                    "No se pudo iniciar el navegador porque no hay conexión a Internet "
-                    "o no se pudo descargar/verificar el driver necesario.\n\n"
-                    "Verificá la conexión e intentá nuevamente."
-                ) from e
-
-            raise
+        raise ValueError(f"Navegador inválido: {navegador}")
 
     def autodetectar_navegador(self):
         for nav in ("chrome", "edge", "firefox"):
@@ -268,42 +148,10 @@ class ConfiguradorModem414:
             self._status("Navegador inicializado.")
             self.configurar_modem(creds, extras)
             self._status("✅ Configuración DM986-414 completada.")
-            return True
-
-        # ============================================================
-        # INICIO BLOQUE AGREGADO - CAPTURA DE ERRORES AMIGABLES
-        # ============================================================
-        except ErrorInternetODriver as e:
-            self._msgbox_error("Sin conexión a Internet", str(e))
-            self._guardar_error_tecnico()
-            return False
-
-        except ErrorConexionEquipo as e:
-            self._msgbox_error("Error de conexión", str(e))
-            self._guardar_error_tecnico()
-            return False
-
-        except ErrorCredencialesEquipo as e:
-            self._msgbox_error("Contraseña incorrecta", str(e))
-            self._guardar_error_tecnico()
-            return False
-
-        except ErrorConfiguracionAmigable as e:
-            self._msgbox_error("Error durante la configuración", str(e))
-            self._guardar_error_tecnico()
-            return False
-        # ============================================================
-        # FIN BLOQUE AGREGADO - CAPTURA DE ERRORES AMIGABLES
-        # ============================================================
 
         except Exception as e:
-            self._msgbox_error(
-                "Error durante la configuración (414)",
-                "Ocurrió un error inesperado durante la configuración.\n\n"
-                "Se guardaron detalles técnicos en el archivo error_log.txt."
-            )
-            self._guardar_error_tecnico()
-            return False
+            self._msgbox_error("Error durante la configuración (414)", str(e))
+            traceback.print_exc()
 
         finally:
             # NO cerrar el navegador (modo debug)
@@ -360,14 +208,7 @@ class ConfiguradorModem414:
         # LOGIN (414)
         # =========================
         self._status("Accediendo al modem (414)...")
-
-        # ============================================================
-        # INICIO BLOQUE AGREGADO - APERTURA SEGURA DEL LOGIN
-        # ============================================================
-        self._abrir_login_seguro("http://192.168.0.1")
-        # ============================================================
-        # FIN BLOQUE AGREGADO - APERTURA SEGURA DEL LOGIN
-        # ============================================================
+        d.get("http://192.168.0.1")
 
         self._status("Ingresando credenciales...")
         user_field = wait.until(EC.presence_of_element_located((By.NAME, "username")))
@@ -377,14 +218,6 @@ class ConfiguradorModem414:
         pass_field.clear()
         pass_field.send_keys(password)
         pass_field.send_keys(Keys.RETURN)
-
-        # ============================================================
-        # INICIO BLOQUE AGREGADO - VERIFICACIÓN DE LOGIN
-        # ============================================================
-        self._verificar_login_exitoso_414(timeout=15)
-        # ============================================================
-        # FIN BLOQUE AGREGADO - VERIFICACIÓN DE LOGIN
-        # ============================================================
 
         # =========================
         # WAN - VLAN 500

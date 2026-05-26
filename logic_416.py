@@ -13,10 +13,33 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
+
+
+# ============================================================
+# INICIO BLOQUE AGREGADO - MANEJO DE ERRORES AMIGABLES
+# ============================================================
+class ErrorConexionEquipo(Exception):
+    pass
+
+
+class ErrorCredencialesEquipo(Exception):
+    pass
+
+
+class ErrorConfiguracionAmigable(Exception):
+    pass
+
+
+class ErrorInternetODriver(Exception):
+    pass
+# ============================================================
+# FIN BLOQUE AGREGADO - MANEJO DE ERRORES AMIGABLES
+# ============================================================
 
 
 class ConfiguradorModem416:
@@ -42,41 +65,146 @@ class ConfiguradorModem416:
         else:
             self._status(f"{title}: {text}")
 
+    # ============================================================
+    # INICIO BLOQUE AGREGADO - HELPERS DE ERRORES
+    # ============================================================
+    def _guardar_error_tecnico(self):
+        try:
+            with open("error_log.txt", "a", encoding="utf-8") as f:
+                f.write("\n" + "=" * 80 + "\n")
+                f.write(traceback.format_exc())
+                f.write("\n")
+        except Exception:
+            pass
+
+    def _abrir_login_seguro(self, url: str):
+        try:
+            self.driver.get(url)
+        except WebDriverException as e:
+            texto = str(e).upper()
+            if (
+                "ERR_CONNECTION_TIMED_OUT" in texto
+                or "ERR_CONNECTION_REFUSED" in texto
+                or "ERR_ADDRESS_UNREACHABLE" in texto
+                or "ERR_NAME_NOT_RESOLVED" in texto
+                or "ERR_INTERNET_DISCONNECTED" in texto
+            ):
+                raise ErrorConexionEquipo(
+                    "No se pudo acceder al equipo.\n\n"
+                    "Verificá que la PC esté conectada a la red Wi-Fi o LAN correcta del dispositivo "
+                    "y que la IP 192.168.0.1 sea accesible."
+                ) from e
+            raise
+
+    def _verificar_login_exitoso(self, timeout=15):
+        d = self.driver
+        try:
+            return WebDriverWait(d, timeout).until(
+                EC.presence_of_element_located((By.ID, "nav"))
+            )
+        except TimeoutException as e:
+            try:
+                d.switch_to.default_content()
+            except Exception:
+                pass
+
+            try:
+                iframes = d.find_elements(By.TAG_NAME, "iframe")
+                if iframes:
+                    try:
+                        d.switch_to.frame(iframes[0])
+                    except Exception:
+                        pass
+
+                user_fields = d.find_elements(By.NAME, "username")
+                pass_fields = d.find_elements(By.NAME, "password")
+                login_buttons = d.find_elements(By.XPATH, "//input[@type='submit' and @value='Login']")
+
+                if user_fields and pass_fields and login_buttons:
+                    raise ErrorCredencialesEquipo(
+                        "No se pudo iniciar sesión en el equipo.\n\n"
+                        "Revisá que la contraseña ingresada sea correcta."
+                    ) from e
+            except ErrorCredencialesEquipo:
+                raise
+            except Exception:
+                pass
+
+            raise ErrorConfiguracionAmigable(
+                "No se pudo cargar correctamente la interfaz del equipo después del login.\n\n"
+                "Verificá la conexión con el dispositivo e intentá nuevamente."
+            ) from e
+    # ============================================================
+    # FIN BLOQUE AGREGADO - HELPERS DE ERRORES
+    # ============================================================
+
     # =========================
     # Driver
     # =========================
     def iniciar_navegador(self, navegador: str):
-        if navegador == "chrome":
-            options = ChromeOptions()
-            options.add_argument("--ignore-certificate-errors")
-            options.add_argument("--ignore-ssl-errors")
-            options.add_argument("--disable-web-security")
-            options.add_argument("--allow-running-insecure-content")
-            return webdriver.Chrome(
-                service=ChromeService(ChromeDriverManager().install()),
-                options=options
-            )
+        try:
+            if navegador == "chrome":
+                options = ChromeOptions()
+                options.add_argument("--ignore-certificate-errors")
+                options.add_argument("--ignore-ssl-errors")
+                options.add_argument("--disable-web-security")
+                options.add_argument("--allow-running-insecure-content")
+                return webdriver.Chrome(
+                    service=ChromeService(ChromeDriverManager().install()),
+                    options=options
+                )
 
-        if navegador == "edge":
-            options = EdgeOptions()
-            options.add_argument("--ignore-certificate-errors")
-            options.add_argument("--ignore-ssl-errors")
-            options.add_argument("--disable-web-security")
-            options.add_argument("--allow-running-insecure-content")
-            return webdriver.Edge(
-                service=EdgeService(EdgeChromiumDriverManager().install()),
-                options=options
-            )
+            if navegador == "edge":
+                options = EdgeOptions()
+                options.add_argument("--ignore-certificate-errors")
+                options.add_argument("--ignore-ssl-errors")
+                options.add_argument("--disable-web-security")
+                options.add_argument("--allow-running-insecure-content")
+                return webdriver.Edge(
+                    service=EdgeService(EdgeChromiumDriverManager().install()),
+                    options=options
+                )
 
-        if navegador == "firefox":
-            options = FirefoxOptions()
-            options.accept_insecure_certs = True
-            return webdriver.Firefox(
-                service=FirefoxService(GeckoDriverManager().install()),
-                options=options
-            )
+            if navegador == "firefox":
+                options = FirefoxOptions()
+                options.accept_insecure_certs = True
+                return webdriver.Firefox(
+                    service=FirefoxService(GeckoDriverManager().install()),
+                    options=options
+                )
 
-        raise ValueError(f"Navegador inválido: {navegador}")
+            raise ValueError(f"Navegador inválido: {navegador}")
+
+        except Exception as e:
+            texto = str(e).lower()
+
+            indicadores_internet_driver = [
+                "connection",
+                "connect",
+                "internet",
+                "network",
+                "name resolution",
+                "name or service not known",
+                "could not reach host",
+                "failed to establish a new connection",
+                "max retries exceeded",
+                "get_lan_ip",
+                "ssl",
+                "certificate",
+                "webdriver_manager",
+                "requests",
+                "urlopen error",
+                "timed out",
+            ]
+
+            if any(ind in texto for ind in indicadores_internet_driver):
+                raise ErrorInternetODriver(
+                    "No se pudo iniciar el navegador porque no hay conexión a Internet "
+                    "o no se pudo descargar/verificar el driver necesario.\n\n"
+                    "Verificá la conexión e intentá nuevamente."
+                ) from e
+
+            raise
 
     def autodetectar_navegador(self):
         for nav in ("chrome", "edge", "firefox"):
@@ -132,17 +260,47 @@ class ConfiguradorModem416:
             self._status("Navegador inicializado.")
             self.configurar_modem(creds, extras)
             self._status("✅ Configuración DM986-416 AX30 completada.")
+            return True
+
+        # ============================================================
+        # INICIO BLOQUE AGREGADO - CAPTURA DE ERRORES AMIGABLES
+        # ============================================================
+        except ErrorInternetODriver as e:
+            self._msgbox_error("Sin conexión a Internet", str(e))
+            self._guardar_error_tecnico()
+            return False
+
+        except ErrorConexionEquipo as e:
+            self._msgbox_error("Error de conexión", str(e))
+            self._guardar_error_tecnico()
+            return False
+
+        except ErrorCredencialesEquipo as e:
+            self._msgbox_error("Contraseña incorrecta", str(e))
+            self._guardar_error_tecnico()
+            return False
+
+        except ErrorConfiguracionAmigable as e:
+            self._msgbox_error("Error durante la configuración", str(e))
+            self._guardar_error_tecnico()
+            return False
+        # ============================================================
+        # FIN BLOQUE AGREGADO - CAPTURA DE ERRORES AMIGABLES
+        # ============================================================
 
         except Exception as e:
-            self._msgbox_error("Error durante la configuración (416 Q)", str(e))
-            traceback.print_exc()
+            self._msgbox_error(
+                "Error durante la configuración (416 Q)",
+                "Ocurrió un error inesperado durante la configuración.\n\n"
+                "Se guardaron detalles técnicos en el archivo error_log.txt."
+            )
+            self._guardar_error_tecnico()
+            return False
 
         finally:
-            try:
-                if self.driver:
-                    self.driver.quit()
-            except Exception:
-                pass
+            # NO cerrar el navegador para poder verificar la configuración final
+            self._status("Navegador queda abierto para verificación.")
+            pass
 
     # =========================
     # Extras WLAN (defaults + validación)
@@ -189,7 +347,15 @@ class ConfiguradorModem416:
         # LOGIN (416 AX30)
         # =========================
         self._status("Accediendo a login del modem (416)...")
-        d.get("https://192.168.0.1/admin/login.asp")
+
+        # ============================================================
+        # INICIO BLOQUE AGREGADO - APERTURA SEGURA DEL LOGIN
+        # ============================================================
+        self._abrir_login_seguro("https://192.168.0.1/admin/login.asp")
+        # ============================================================
+        # FIN BLOQUE AGREGADO - APERTURA SEGURA DEL LOGIN
+        # ============================================================
+
         time.sleep(2)
 
         self._switch_to_first_iframe_if_present()
@@ -217,7 +383,14 @@ class ConfiguradorModem416:
         self._click_safe(login_btn)
 
         self._status("Esperando interfaz del modem...")
-        nav_menu = WebDriverWait(d, 15).until(EC.presence_of_element_located((By.ID, "nav")))
+
+        # ============================================================
+        # INICIO BLOQUE AGREGADO - VERIFICACIÓN DE LOGIN
+        # ============================================================
+        nav_menu = self._verificar_login_exitoso(timeout=15)
+        # ============================================================
+        # FIN BLOQUE AGREGADO - VERIFICACIÓN DE LOGIN
+        # ============================================================
 
         # =========================
         # WAN - VLAN 500
@@ -404,8 +577,6 @@ class ConfiguradorModem416:
         self._click_safe(apply_btn)
         time.sleep(3)
 
-
-
         # =========================
         # Seguridad 5GHz
         # =========================
@@ -444,8 +615,7 @@ class ConfiguradorModem416:
         )
         self._click_safe(apply_sec5)
         time.sleep(3)
-        
-    
+
         # =========================
         # WLAN 2.4GHz
         # =========================
@@ -520,7 +690,6 @@ class ConfiguradorModem416:
         )
         self._click_safe(apply_sec24)
         time.sleep(3)
-
 
         # =========================
         # Admin -> Password
@@ -643,15 +812,40 @@ class ConfiguradorModem416:
 
         self._switch_to_content_iframe(timeout=15)
 
-        https_checkbox = WebDriverWait(d, 15).until(EC.element_to_be_clickable((By.NAME, "w_https")))
+        https_checkbox = WebDriverWait(d, 15).until(
+            EC.presence_of_element_located((By.NAME, "w_https"))
+        )
+
+        try:
+            d.execute_script("arguments[0].scrollIntoView({block:'center'});", https_checkbox)
+        except Exception:
+            pass
+
+        time.sleep(1)
+
         if not https_checkbox.is_selected():
             self._click_safe(https_checkbox)
+            time.sleep(1)
+
+        # Verificación: confirmar que realmente quedó tildado
+        https_checkbox = WebDriverWait(d, 10).until(
+            EC.presence_of_element_located((By.NAME, "w_https"))
+        )
+
+        if not https_checkbox.is_selected():
+            raise Exception("No se pudo tildar la opción HTTPS en Remote Access.")
 
         apply_remote = WebDriverWait(d, 15).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@type='submit' and @name='set' and @value='Apply Changes']"))
         )
-        self._click_safe(apply_remote)
 
-        self._status("Listo. El modem debería quedar configurado.")
-        
-        
+        try:
+            d.execute_script("arguments[0].scrollIntoView({block:'center'});", apply_remote)
+        except Exception:
+            pass
+
+        time.sleep(1)
+        self._click_safe(apply_remote)
+        time.sleep(5)
+
+        self._status("✅ Remote Access HTTPS aplicado. Verificá visualmente que haya quedado guardado.")

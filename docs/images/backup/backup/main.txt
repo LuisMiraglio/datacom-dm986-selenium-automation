@@ -347,20 +347,12 @@ class MainApp:
             else:
                 logic = ConfiguradorModem414(self)
 
-            ok = logic.run()
-
-            if ok:
-                self.actualizar_estado("✅ Proceso finalizado")
-            else:
-                self.actualizar_estado("❌ Proceso finalizado con errores")
+            logic.run()
+            self.actualizar_estado("✅ Proceso finalizado")
 
         except Exception as e:
-            self.actualizar_estado("❌ Error inesperado en la ejecución")
-            self.safe_messagebox(
-                "Error",
-                "Ocurrió un error inesperado al iniciar o ejecutar el proceso.",
-                kind="error"
-            )
+            self.actualizar_estado(f"❌ ERROR: {e}")
+            self.safe_messagebox("Error", str(e), kind="error")
 
         finally:
             self.stop_progress()
